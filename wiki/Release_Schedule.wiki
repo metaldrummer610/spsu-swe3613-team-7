@@ -1,0 +1,14 @@
+#summary The schedule for releases of this project
+#labels Phase-Design
+
+= Release 1 - 9/13/11 =
+
+ * In the first iteration of this project, we plan on having done a mock up of the UI, a populated database, and at least a working draft of the networking protocol.
+
+Breaking down the work between members:
+|| *Member* || *Responsible For:* ||
+|| Robbie || Networking library draft ||
+|| Jeff || Populating the database with ICD-9 and ICD-10 codes ||
+|| Greg || UI mock up ||
+|| David || UI mock up ||
+|| Kevin || UI mock up / helping Jeff populate the database ||
