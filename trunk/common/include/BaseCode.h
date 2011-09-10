@@ -26,36 +26,12 @@ typedef enum _code_types
 /**
 * Converts a CodeType to an int so that it can be sent over the network
 */
-int codeToInt(CodeType t)
-{
-	switch(t)
-	{
-		case ICD9_t:
-			return 1;
-		case ICD10_t:
-			return 2;
-		case NOT_SET:
-			return -1;
-		default:
-			return 0;
-	}
-}
+int codeToInt(CodeType t);
 
 /**
 * Converts an int to a CodeType so that it can be assigned to a BaseCode object
 */
-CodeType intToCode(int i)
-{
-	switch(i)
-	{
-		case 1:
-			return ICD9_t;
-		case 2:
-			return ICD10_t;
-		default:
-			return NOT_SET;
-	}
-}
+CodeType intToCode(int i);
 
 /**
 * This is the base class for all ICD9 and ICD10 codes. It provides functions for converting to and from void*'s for network communication.

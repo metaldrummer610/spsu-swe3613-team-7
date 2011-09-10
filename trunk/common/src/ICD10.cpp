@@ -47,8 +47,9 @@ void ICD10::fromBuffer(void* buf)
 	char tmpCode[ICD10_STR_LEN];
 	memcpy(&tmpCode, ptr, ICD10_STR_LEN);
 	ptr += ICD10_STR_LEN;
+	tmpCode[ICD10_STR_LEN] = '\0';
 
 	code.clear();
-	code.append((const char*)tmpCode);
+	code += tmpCode;
 }
 
