@@ -36,7 +36,7 @@ void* codeListToBuffer(std::vector<BaseCode*> list)
 std::vector<BaseCode*> bufferToCodeList(void* buf)
 {
 	if(buf == NULL)
-		throw NullBufferException();
+		throw NullPointerException();
 
 	std::vector<BaseCode*> ret;
 	char* ptr = (char*)buf;

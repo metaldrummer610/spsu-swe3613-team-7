@@ -1,9 +1,10 @@
 /**
 * \class BaseCode
+* \brief A base class used for ICD codes.
 * 
-* \author Robbie Diaz $Author: bv $
-* \version $Revision: 1.0 $
-* \date $Date: 2011-09-09 12:00:00 $
+* \author Robbie Diaz
+* \version 1.0
+* \date 2011-09-09
 */
 
 #ifndef _BASE_CODE_H
@@ -62,24 +63,24 @@ CodeType intToCode(int i)
 class BaseCode
 {
 public:
-	BaseCode() : type(NOT_SET), code("") {}
-	BaseCode(CodeType t) : code("") { type = t; }
-	BaseCode(CodeType t, char* c) : type(t), code(c) {}
-	BaseCode(CodeType t, std::string c) : type(t), code(c) {}
+	BaseCode() : type(NOT_SET), code("") {}							//!< Default constructor
+	BaseCode(CodeType t) : code("") { type = t; }					//!< Initializes with a specific CodeType
+	BaseCode(CodeType t, char* c) : type(t), code(c) {}			//!< Initializes with a specific CodeType and code as a char*
+	BaseCode(CodeType t, std::string c) : type(t), code(c) {}	//!< Initializes with a specific CodeType and code as a std::string
 
-	virtual void* toBuffer() = 0;
-	virtual void fromBuffer(void* buf) = 0;
+	virtual void* toBuffer() = 0;											//!< Converts this code to a buffer of bytes
+	virtual void fromBuffer(void* buf) = 0;							//!< Converts a buffer of bytes to a code
 
-	CodeType getType() { return type; }
-	std::string getCode() { return code; }
+	CodeType getType() { return type; }									//!< Returns the type of code
+	std::string getCode() { return code; }								//!< Returns the code
 
-	void setType(CodeType t) { type = t; }
-	void setCode(std::string s) { code = s; }
+	void setType(CodeType t) { type = t; }								//!< Sets the type of code
+	void setCode(std::string s) { code = s; }							//!< Sets the code
 
-	static BaseCode* createCodeFromBuffer(void* buf);
+	static BaseCode* createCodeFromBuffer(void* buf);				//!< Creates a generic BaseCode object from a buffer of bytes. A factory method.
 protected:
-	CodeType type;
-	std::string code;
+	CodeType type;																//!< The type of code
+	std::string code;															//!< The code
 };
 
 #endif
