@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-Wall -I./include/ -c
 LDFLAGS=
-SRC=src/ICD9.cpp src/ICD10.cpp src/CodeList.cpp
+SRC=src/ICD9.cpp src/ICD10.cpp src/CodeList.cpp src/BaseCode.cpp
 OBJ=*.o
 LIBNAME=libICDNetwork.a
 DOXYFILE=Doxyfile
@@ -10,6 +10,10 @@ all : $(SRC)
 	$(CC) $(CFLAGS) $(SRC)
 	ar rvs $(LIBNAME) $(OBJ)
 	mv $(LIBNAME) bin/
+	$(MAKE) test
+
+test:
+	cd tests && $(MAKE)
 
 doc:
 	doxygen $(DOXYFILE)
@@ -17,3 +21,4 @@ doc:
 clean:
 	rm -f bin/$(LIBNAME) $(OBJ) # Deletes binary files
 	rm -f -R doc/html/
+	cd tests && $(MAKE) clean
