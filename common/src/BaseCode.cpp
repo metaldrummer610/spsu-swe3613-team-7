@@ -5,7 +5,7 @@
 static BaseCode* BaseCode::createCodeFromBuffer(void* buf)
 {
 	if(buf == NULL)
-		throw NullBufferException();
+		throw NullPointerException();
 
 	int tmpCode = 0;
 	memcpy(&tmpCode, buf, sizeof(int));

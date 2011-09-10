@@ -34,7 +34,7 @@ void* ICD10::toBuffer()
 void ICD10::fromBuffer(void* buf)
 {
 	if(buf == NULL)
-		throw NullBufferException();
+		throw NullPointerException();
 
 	char* ptr = (char*)buf;
 
