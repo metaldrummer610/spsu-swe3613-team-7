@@ -12,3 +12,14 @@ Breaking down the work between members:
 || Greg || UI mock up ||
 || David || UI mock up ||
 || Kevin || UI mock up / helping Jeff populate the database ||
+
+= Release 2 - 9/20/11 =
+ * The second iteration of the project will focus on the completion of the networking library, the completion of the database, a basic implementation of the server, and a basic flow of the UI.
+
+Breaking down the work between members:
+|| *Member* || *Responsible For:* ||
+|| Robbie || Finished networking library. Basic server implementation ||
+|| Jeff || Finish populating the database. Basic server implementation ||
+|| Greg || Basic flow of UI ||
+|| David || Basic flow of UI ||
+|| Kevin || Basic flow of UI ||
