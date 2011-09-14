@@ -1,0 +1,26 @@
+#summary The overall architecture and design of the project
+#labels Phase-Design
+
+= Introduction =
+
+This is a skeleton page for architecture and design discussions. We'll modify it when we get here.
+
+
+= Details =
+
+==Programming languages:==
+  * We discussed on 8-25-11 what programming language(s) we should use. We came up with, but made no decision on:
+    * Java
+    * C++
+    * C# (If we're doing a desktop only client)
+  * *UPDATE 9/06/13*
+   ** We have decided that we will write this project in C# (for the client side) and C++ (for the server side)
+
+
+==Architecture:==
+  * We also discussed on 8-25-11 what the overall design of the application should be. We discussed, but did not decide on:
+    * A client-server model, where we would have a database on the server
+    * A desktop only client, with no database.
+    * A web application (which will probably not happen)
+  * *UPDATE 9/06/13*
+   ** We have decided that the project will be a client server architecture. The client will run on Windows, while the server will run on Linux (specifically Ubuntu 11.04).
