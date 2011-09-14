@@ -1467,34 +1467,42 @@
 17311 Basal cell carcinoma of eyelid, including canthus
 17312 Squamous cell carcinoma of eyelid, including canthus
 17319 Other specified malignant neoplasm of eyelid, including canthus
+1732  Oth and unspec malignant neoplasm of skin of ear and external auditory canal
 17320 Unspecified malignant neoplasm of skin of ear and external auditory canal
 17321 Basal cell carcinoma of skin of ear and external auditory canal
 17322 Squamous cell carcinoma of skin of ear and external auditory canal
 17329 Other specified malignant neoplasm of skin of ear and external auditory canal
+1733  Oth and unspec malignant neoplasm of skin of oth and unspec parts of face
 17330 Unspecified malignant neoplasm of skin of other and unspecified parts of face
 17331 Basal cell carcinoma of skin of other and unspecified parts of face
 17332 Squamous cell carcinoma of skin of other and unspecified parts of face
 17339 Other specified malignant neoplasm of skin of other and unspecified parts of face
+1734  Oth and unspec malignant neoplasm of scalp and skin of neck
 17340 Unspecified malignant neoplasm of scalp and skin of neck
 17341 Basal cell carcinoma of scalp and skin of neck
 17342 Squamous cell carcinoma of scalp and skin of neck
 17349 Other specified malignant neoplasm of scalp and skin of neck
+1735  Oth and unspec malignant neoplasm of skin of trunk, except scrotum
 17350 Unspecified malignant neoplasm of skin of trunk, except scrotum
 17351 Basal cell carcinoma of skin of trunk, except scrotum
 17352 Squamous cell carcinoma of skin of trunk, except scrotum
 17359 Other specified malignant neoplasm of skin of trunk, except scrotum
+1736  Oth and unspec malignant neoplasm of skin of upper limb, including shoulder
 17360 Unspecified malignant neoplasm of skin of upper limb, including shoulder
 17361 Basal cell carcinoma of skin of upper limb, including shoulder
 17362 Squamous cell carcinoma of skin of upper limb, including shoulder
 17369 Other specified malignant neoplasm of skin of upper limb, including shoulder
+1737  Oth and unspec malignant neoplasm of skin of lower limb, including hip 
 17370 Unspecified malignant neoplasm of skin of lower limb, including hip
 17371 Basal cell carcinoma of skin of lower limb, including hip
 17372 Squamous cell carcinoma of skin of lower limb, including hip
 17379 Other specified malignant neoplasm of skin of lower limb, including hip
+1738  Oth and unspec malignant neoplasm of oth spec sites of skin
 17380 Unspecified malignant neoplasm of other specified sites of skin
 17381 Basal cell carcinoma of other specified sites of skin
 17382 Squamous cell carcinoma of other specified sites of skin
 17389 Other specified malignant neoplasm of other specified sites of skin
+1739  Oth and unspec malignant neoplasm of skin, site unspec
 17390 Unspecified malignant neoplasm of skin, site unspecified
 17391 Basal cell carcinoma of skin, site unspecified
 17392 Squamous cell carcinoma of skin, site unspecified
@@ -2637,6 +2645,7 @@
 2839  Acquired hemolytic anemia, unspecified
 28401 Constitutional red blood cell aplasia
 28409 Other constitutional aplastic anemia
+2841  Pancytopenia
 28411 Antineoplastic chemotherapy induced pancytopenia
 28412 Other drug-induced pancytopenia
 28419 Other pancytopenia
@@ -2657,6 +2666,7 @@
 2862  Congenital factor XI deficiency
 2863  Congenital deficiency of other clotting factors
 2864  Von Willebrand's disease
+2865  Hemorrhagic disorder due to intrinsic circulating anticoagulants
 28652 Acquired hemophilia
 28653 Antiphospholipid antibody with hemorrhagic disorder
 28659 Other hemorrhagic disorder due to intrinsic circulating anticoagulants, antibodies, or inhibitors
@@ -3128,6 +3138,7 @@
 3100  Frontal lobe syndrome
 3101  Personality change due to conditions classified elsewhere
 3102  Postconcussion syndrome
+3108  Other specified nonpsychotic mental disorders following organic brain damage
 31081 Pseudobulbar affect
 31089 Other specified nonpsychotic mental disorders following organic brain damage
 3109  Unspecified nonpsychotic mental disorder following organic brain damage
@@ -4752,6 +4763,7 @@
 42491 Endocarditis in diseases classified elsewhere
 42499 Other endocarditis, valve unspecified
 4250  Endomyocardial fibrosis
+4251  Hypertrophic cardiomyopathy
 42511 Hypertrophic obstructive cardiomyopathy
 42518 Other hypertrophic cardiomyopathy
 4252  Obscure cardiomyopathy of Africa
@@ -4939,6 +4951,7 @@
 44382 Erythromelalgia
 44389 Other specified peripheral vascular diseases
 4439  Peripheral vascular disease, unspecified
+4440  Embolism and thrombosis of abdominal aorta
 44401 Saddle embolus of abdominal aorta
 44409 Other arterial embolism and thrombosis of abdominal aorta
 4441  Embolism and thrombosis of thoracic aorta
@@ -5263,6 +5276,7 @@
 5120  Spontaneous tension pneumothorax
 5121  Iatrogenic pneumothorax
 5122  Postoperative air leak
+5128  Oth pneumothorax and air leak
 51281 Primary spontaneous pneumothorax
 51282 Secondary spontaneous pneumothorax
 51283 Chronic pneumothorax
@@ -5275,6 +5289,7 @@
 5160  Pulmonary alveolar proteinosis
 5161  Idiopathic pulmonary hemosiderosis
 5162  Pulmonary alveolar microlithiasis
+5163  Idiopathic interstitial pneumonia
 51630 Idiopathic interstitial pneumonia, not otherwise specified
 51631 Idiopathic pulmonary fibrosis
 51632 Idiopathic non-specific interstitial pneumonitis
@@ -5301,6 +5316,7 @@
 5182  Compensatory emphysema
 5183  Pulmonary eosinophilia
 5184  Acute edema of lung, unspecified
+5185  Pulmonary insufficiency following trauma and surgery
 51851 Acute respiratory failure following trauma and surgery
 51852 Other pulmonary insufficiency, not elsewhere classified, following trauma and surgery
 51853 Acute and chronic respiratory failure following trauma and surgery
@@ -6023,6 +6039,7 @@
 59659 Other functional disorder of bladder
 5966  Rupture of bladder, nontraumatic
 5967  Hemorrhage into bladder wall
+5968  Other specified disorders of bladder
 59681 Infection of cystostomy
 59682 Mechanical complication of cystostomy
 59683 Other complication of cystostomy
@@ -6308,6 +6325,7 @@
 62989 Other specified disorders of female genital organs
 6299  Unspecified disorder of female genital organs
 630   Hydatidiform mole
+631   Other abnormal product of conception
 6310  Inappropriate change in quantitative human chorionic gonadotropin (hCG) in early pregnancy
 6318  Other abnormal products of conception
 632   Missed abortion
@@ -8000,6 +8018,7 @@
 71857 Ankylosis of joint, ankle and foot
 71858 Ankylosis of joint, other specified sites
 71859 Ankylosis of joint, multiple sites
+71860 Unspecified intrapelvic protrusion of acetabulum site unspecified
 71865 Unspecified intrapelvic protrusion of acetabulum, pelvic region and thigh
 71870 Developmental dislocation of joint, site unspecified
 71871 Developmental dislocation of joint, shoulder region
@@ -8642,6 +8661,7 @@
 74721 Anomalies of aortic arch
 74722 Atresia and stenosis of aorta
 74729 Other anomalies of aorta
+7473  Congenital anomalies of pulmonary artery
 74731 Pulmonary artery coarctation and atresia
 74732 Pulmonary arteriovenous malformation
 74739 Other anomalies of pulmonary artery and pulmonary circulation
@@ -9469,6 +9489,7 @@
 7925  Cloudy (hemodialysis) (peritoneal) dialysis effluent
 7929  Other nonspecific abnormal findings in body substances
 7930  Nonspecific (abnormal) findings on radiological and other examination of skull and head
+7931  Nonspecific (abnormal) findings on radiological and other examination of lung field
 79311 Solitary pulmonary nodule
 79319 Other nonspecific abnormal finding of lung field
 7932  Nonspecific (abnormal) findings on radiological and other examination of other intrathoracic organs
@@ -9529,6 +9550,7 @@
 79531 Nonspecific positive findings for anthrax
 79539 Other nonspecific positive culture findings
 7954  Other nonspecific abnormal histological findings
+7955  Nonspecific reaction to test for tuberculosis
 79551 Nonspecific reaction to tuberculin skin test without active tuberculosis
 79552 Nonspecific reaction to cell mediated immunity measurement of gamma interferon antigen response without active tuberculosis
 7956  False positive serological test for syphilis
@@ -12096,6 +12118,7 @@
 99731 Ventilator associated pneumonia
 99732 Postprocedural aspiration pneumonia
 99739 Other respiratory complications
+9974  Digestive system complications not elsewhere classified
 99741 Retained cholelithiasis following cholecystectomy
 99749 Other digestive system complications
 9975  Urinary complications, not elsewhere classified
@@ -12108,6 +12131,7 @@
 99779 Vascular complications of other vessels
 99791 Complications affecting other specified body systems, not elsewhere classified, hypertension
 99799 Complications affecting other specified body systems, not elsewhere classified
+9980  Postoperative shock not elsewhere classified
 99800 Postoperative shock, unspecified
 99801 Postoperative shock, cardiogenic
 99802 Postoperative shock, septic
@@ -12138,9 +12162,11 @@
 99933 Local infection due to central venous catheter
 99934 Acute infection following transfusion, infusion, or injection of blood and blood products
 99939 Infection following other infusion, injection, transfusion, or vaccination
+9994  Anaphylactic reaction to serum
 99941 Anaphylactic reaction due to administration of blood and blood products
 99942 Anaphylactic reaction due to vaccination
 99949 Anaphylactic reaction due to other serum
+9995  Other serum reaction not elsewhere classified
 99951 Other serum reaction due to administration of blood and blood products
 99952 Other serum reaction due to vaccination
 99959 Other serum reaction
@@ -13620,6 +13646,7 @@ V1203 Personal history of malaria
 V1204 Personal history of Methicillin resistant Staphylococcus aureus
 V1209 Personal history of other infectious and parasitic diseases
 V121  Personal history of nutritional deficiency
+V122  Personal history of endocrine metabolic and immunity disorders
 V1221 Personal history of gestational diabetes
 V1229 Personal history of other endocrine, metabolic, and immunity disorders
 V123  Personal history of diseases of blood and blood-forming organs
@@ -13667,6 +13694,7 @@ V1367 Personal history of (corrected) congenital malformations of digestive syst
 V1368 Personal history of (corrected) congenital malformations of integument, limbs, and musculoskeletal systems
 V1369 Personal history of other (corrected) congenital malformations
 V137  Personal history of perinatal problems
+V138  Personal history of other specified diseases
 V1381 Personal history of anaphylaxis
 V1389 Personal history of other specified diseases
 V139  Personal history of unspecified disease
@@ -13755,6 +13783,7 @@ V187  Family history of other genitourinary diseases
 V188  Family history of infectious and parasitic diseases
 V189  Family history of genetic disease carrier
 V190  Family history of blindness or visual loss
+V191  Family history of other eye disorders
 V1911 Family history of glaucoma
 V1919 Family history of other specified eye disorder
 V192  Family history of deafness or hearing loss
@@ -13907,6 +13936,7 @@ V392  Liveborn, unspecified whether single, twin or multiple, born outside hospi
 V400  Mental and behavioral problems with learning
 V401  Mental and behavioral problems with communication [including speech]
 V402  Other mental problems
+V403  Other behavioral problems
 V4031 Wandering in diseases classified elsewhere
 V4039 Other specified behavioral problem
 V409  Unspecified mental or behavioral problem

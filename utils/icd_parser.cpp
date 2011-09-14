@@ -10,7 +10,7 @@
 using namespace std;
 
 /* File Constants
-* These are ugly filenames, but the names that come from http://cms.gov
+* These are the files that we read our data from
 */
 const string DATA_PATH = "./data/";
 const string GEMS_FILENAME = DATA_PATH + "icd_9_cm_to_10_cm_gems.txt";
@@ -31,7 +31,7 @@ const string ICD_10_SQL_FILENAME = SQL_DB_PATH + "ICD_10_DESCRIPTIONS.SQL";
 const string GEMS_DB = "cm_gems";
 const string ICD_9_DB = "icd_9_descriptions";
 const string ICD_10_CM_DB = "icd_10_cm_descriptions";
-const string ICD_10_PCS_DB = "icd_10_pcs_descriptions";
+
 
 ICD_Parser::ICD_Parser()
 {
@@ -51,37 +51,6 @@ void print_short_message(string message) {
 		cout << " ";
 	cout << message << endl;
 }
-
-/** Parses the cm_gems
-*/
-void ICD_Parser::parse_gems() {
-    string line,sql;
-//    int i=0;
-    while(getline(gems_file,line)) {
-        stringstream str(line);
-        string a, b, c;
-        str >> a >> b >> c;
-
-/*
-//Begin compact fast way
-        if(0==i)
-            sql = "INSERT INTO " + GEMS_DB + " (icd_9_code, icd_10_code, flags) VALUES " + "('" + a + "','" + b + "'," + c + ")";
-        else
-            sql = ",('" + a + "','" + b + "'," + c + ")";
-        gems_sql << sql;
-        ++i;
-    }
-    gems_sql << ";";
-//End compact fast way
-
-*/
-// Begin old slow debugging way
-        sql = "INSERT INTO " + GEMS_DB + " (icd_9_code, icd_10_code, flags) VALUES ('" + a + "','" + b + "'," + c + ");";
-        gems_sql << sql << endl;
-    }
- //End slow debugging way
-}
-
 
 /** 
 * Used to find and replace single quotes
@@ -112,7 +81,7 @@ void fix_utf8_string(string& str)
 */
 string replace_bad_chars(string source) {
     source=find_and_replace(source,"'","''");
-
+    source=find_and_replace(source,"x","X");
     string line=source;
     string::iterator end_it = utf8::find_invalid(line.begin(), line.end());
     if (end_it != line.end()) {
@@ -136,7 +105,7 @@ void ICD_Parser::parse_9_codes() {
             c+=" "+b;
         c=replace_bad_chars(c);
         if(0==i)
-            sql = "INSERT INTO " + ICD_9_DB + " (code, description) VALUES " + "('" + a + "','" + c + "')";
+            sql = "INSERT INTO " + ICD_9_DB + " (icd_9_code, icd_9_description) VALUES " + "('" + a + "','" + c + "')";
         else
             sql = ",('" + a + "','" + c + "')";
         icd_9_sql << sql;
@@ -148,7 +117,6 @@ void ICD_Parser::parse_9_codes() {
 /** Parses the ICD 10-CM Descriptions
 */
 void ICD_Parser::parse_10_cm_codes() {
-    //cout << "IN 10" << endl;
     print_short_message("Parsing ICD 10 Descriptions...");
     string line,sql;
     int i=0;
@@ -163,18 +131,18 @@ void ICD_Parser::parse_10_cm_codes() {
 
 //Begin compact fast way
         if(0==i)
-            sql = "INSERT INTO " + ICD_10_CM_DB + " (code, description) VALUES " + "('" + a + "','" + c + "')";
+            sql = "INSERT INTO " + ICD_10_CM_DB + " (icd_10_code, icd_10_description) VALUES " + "('" + a + "','" + c + "')";
         else
             sql = ",('" + a + "','" + c + "')";
         icd_10_sql << sql;
         ++i;
     }
-    icd_10_sql << ";";
+    icd_10_sql << ",('NoDX','No Crosswalk');";
 //End compact fast way
 
 /*
 //Begin slow debugging way
-        sql = "INSERT INTO " + ICD_10_CM_DB + " (code, description) VALUES " + "('" + a + "','" + c + "');";
+        sql = "INSERT INTO " + ICD_10_CM_DB + " (icd_10_code, description) VALUES " + "('" + a + "','" + c + "');";
         icd_10_sql << sql << endlls
         ls
         ;
@@ -182,6 +150,38 @@ void ICD_Parser::parse_10_cm_codes() {
 //End slow debugging way
 */
 }
+
+/** Parses the cm_gems
+*/
+void ICD_Parser::parse_gems() {
+    string line,sql;
+    int i=0;
+    while(getline(gems_file,line)) {
+        stringstream str(line);
+        string a, b, c;
+        str >> a >> b >> c;
+        b=replace_bad_chars(b);
+
+//Begin compact fast way
+        if(0==i)
+            sql = "INSERT INTO " + GEMS_DB + " (icd_9_code, icd_10_code, flags) VALUES " + "('" + a + "','" + b + "','" + c + "')";
+        else
+            sql = ",('" + a + "','" + b + "','" + c + "')";
+        gems_sql << sql;
+        ++i;
+    }
+    gems_sql << ";";
+//End compact fast way
+
+/*
+// Begin old slow debugging way
+        sql = "INSERT INTO " + GEMS_DB + " (icd_9_code, icd_10_code, flags) VALUES ('" + a + "','" + b + "','" + c + "');";
+        gems_sql << sql << endl;
+    }
+//End slow debugging way
+*/
+}
+
 
 
 /** Parses the text files
