@@ -31,33 +31,37 @@ CodeType intToCode(int i)
 	}
 }
 
-BaseCode* BaseCode::createCodeFromBuffer(void* buf)
+void* BaseCode::toBuffer()
+{
+	int codeType = codeToInt(type);
+	void* ret = new char[sizeof(int) + sizeof(int) + codeSize];
+	char* ptr = (char*)ret;
+
+	memcpy(ptr, &codeType, sizeof(int));
+	ptr += sizeof(int);
+
+	memcpy(ptr, &codeSize, sizeof(int));
+	ptr += sizeof(int);
+
+	strncpy(ptr, code, codeSize);
+	return ret;
+}
+
+void BaseCode::fromBuffer(void* buf)
 {
 	if(buf == NULL)
 		throw NullPointerException();
 
-	int tmpCode = 0;
-	memcpy(&tmpCode, buf, sizeof(int));
-
-	CodeType type = intToCode(tmpCode);
+	char* ptr = (char*)buf;
 	
-	switch(type)
-	{
-		case ICD9_t:
-		{
-			ICD9* code = new ICD9();
-			code->fromBuffer(buf);
-			return code;
-		}
-		case ICD10_t:
-		{
-			ICD10* code = new ICD10();
-			code->fromBuffer(buf);
-			return code;
-		}
-		case NOT_SET:
-			return NULL;
-	}
+	int codeTypeInt = 0;
+	memcpy(&codeTypeInt, ptr, sizeof(int));
+	ptr += sizeof(int);
+	type = intToCode(codeTypeInt);
 
-	return NULL;
+	memcpy(&codeSize, ptr, sizeof(int));
+	ptr += sizeof(int);
+
+	memset(code, 0, codeSize);
+	strncpy(code, ptr, codeSize);
 }

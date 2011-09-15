@@ -8,7 +8,7 @@ void* codeListToBuffer(std::vector<BaseCode*> list)
 	int bufferLen = 0;
 	for(std::vector<BaseCode*>::iterator it = list.begin(); it != list.end(); it++)
 	{
-		bufferLen += (*it)->getType() == ICD9_t ? ICD9_BUF_LEN : ICD10_BUF_LEN;
+		bufferLen += BASE_CODE_BUFFER_SIZE((*it)->getCodeSize());
 	}
 
 	void* buf = new char[bufferLen + sizeof(int)];
@@ -23,7 +23,7 @@ void* codeListToBuffer(std::vector<BaseCode*> list)
 		BaseCode* code = (BaseCode*)(*it);
 		
 		void* codeBuf = code->toBuffer();
-		int len = code->getType() == ICD9_t ? ICD9_BUF_LEN : ICD10_BUF_LEN;
+		int len = BASE_CODE_BUFFER_SIZE(code->getCodeSize());
 
 		memcpy(ptr, codeBuf, len);
 		ptr += len;
@@ -46,9 +46,10 @@ std::vector<BaseCode*> bufferToCodeList(void* buf)
 
 	for(int i = 0; i < numCodes; i++)
 	{
-		BaseCode* code = BaseCode::createCodeFromBuffer(ptr);
+		BaseCode* code = new BaseCode();
+		code->fromBuffer(ptr);
 
-		int len = code->getType() == ICD9_t ? ICD9_BUF_LEN : ICD10_BUF_LEN;
+		int len = BASE_CODE_BUFFER_SIZE(code->getCodeSize());
 		ptr += len;
 
 		ret.push_back(code);

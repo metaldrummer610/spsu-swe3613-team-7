@@ -95,7 +95,7 @@ int main()
 	}
 
 	address.host = ENET_HOST_ANY;
-	address.port = 4445;
+	address.port = PORT;
 
 	server = enet_host_create(&address, 32, 2, 0, 0);
 
