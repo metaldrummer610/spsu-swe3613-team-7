@@ -23,3 +23,14 @@ Breaking down the work between members:
 || Greg || Basic flow of UI ||
 || David || Basic flow of UI ||
 || Kevin || Basic flow of UI ||
+
+= Release 3 - 9/27/11 =
+ * The third iteration of the project will focus on integrating the networking library into the client, tying the database into the server, and making sure the requirements are solid.
+
+Breaking down the work between members:
+|| *Member* || *Responsible For:* ||
+|| Robbie || Adding any network requirements that are required ||
+|| Jeff || Tying the database into the server ||
+|| Greg || Rewriting client in C++ and integrating network library ||
+|| David || Rewriting client in C++ and integrating network library ||
+|| Kevin || Rewriting client in C++ and integrating network library ||
