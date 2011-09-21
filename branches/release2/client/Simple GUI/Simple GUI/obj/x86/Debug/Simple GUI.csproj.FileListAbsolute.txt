@@ -1,0 +1,9 @@
+c:\users\david\documents\visual studio 2010\Projects\Simple GUI\Simple GUI\bin\Debug\Simple GUI.exe
+c:\users\david\documents\visual studio 2010\Projects\Simple GUI\Simple GUI\bin\Debug\Simple GUI.pdb
+c:\users\david\documents\visual studio 2010\Projects\Simple GUI\Simple GUI\obj\x86\Debug\ResolveAssemblyReference.cache
+c:\users\david\documents\visual studio 2010\Projects\Simple GUI\Simple GUI\obj\x86\Debug\Simple_GUI.Form1.resources
+c:\users\david\documents\visual studio 2010\Projects\Simple GUI\Simple GUI\obj\x86\Debug\Simple_GUI.Properties.Resources.resources
+c:\users\david\documents\visual studio 2010\Projects\Simple GUI\Simple GUI\obj\x86\Debug\GenerateResource.read.1.tlog
+c:\users\david\documents\visual studio 2010\Projects\Simple GUI\Simple GUI\obj\x86\Debug\GenerateResource.write.1.tlog
+c:\users\david\documents\visual studio 2010\Projects\Simple GUI\Simple GUI\obj\x86\Debug\Simple GUI.exe
+c:\users\david\documents\visual studio 2010\Projects\Simple GUI\Simple GUI\obj\x86\Debug\Simple GUI.pdb

@@ -1,0 +1,6 @@
+#summary This page lists out the requirements for this project
+#labels Phase-Requirements
+
+= Project Overview =
+
+As far as I can tell, we are supposed to be converting ICD-9 codes to ICD-10 codes. Though I am still a bit confused on how that is supposed to happen. Are we supposed to create a database and do a bunch of look ups? Is there some algorithm that we are supposed to use that tells us what to do? Seeing as how the professor has only given us this assignment, I'm hoping that within the next few classes he will give us this information.
