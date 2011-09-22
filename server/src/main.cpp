@@ -3,12 +3,49 @@
 #include "ICDNetwork.h"
 #include <string>
 #include <string.h>
+#include <pqxx/pqxx>
 
+using namespace pqxx;
+
+//Hi.  I'm Jeff's debugging macro.  Change me to 0 to remove his garbage output.
+#define DEBUG 1
 #define PORT 9000
+
 
 ENetHost* server;
 ENetAddress address;
 int peerNumber = 0;
+
+void testQuery(connection *c, std::string query) {
+	try {
+		work *w = new work(*c);
+		if(DEBUG)
+			std::cout << "Transaction created.  Yeeeeeeeah!!1eleven" << std::endl;
+		result r = w->exec(query);
+     		w->commit();
+		if(DEBUG)
+			std::cout << "query=" << query << "=" << r[0][0].c_str() << std::endl;
+
+	}
+	catch (const std::exception &e) {
+		std::cerr << e.what() << std::endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
+connection* connectToDatabase() {
+	try {
+		//Make connection
+		connection *c = new connection("host=localhost dbname=swe3613 user=jeff password=swe3613");
+		if(DEBUG)
+			std::cout << "Connected to swe3613@localhost." << std::endl;
+		return c;
+	}
+   	catch (const std::exception &e) {
+   		std::cerr << e.what() << std::endl;
+		exit(EXIT_FAILURE);
+   	}
+}
 
 void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 {
@@ -103,6 +140,13 @@ int main()
 		std::cout << "server is null.... that is bad" << std::endl;
 		exit(EXIT_FAILURE);
 	}
+
+	//Connect to the Database.  Not sure if this is in the right spot.
+	connection *c = connectToDatabase();
+	if(DEBUG)
+		testQuery(c,"Select count(*) from cm_gems");
+	if(DEBUG)
+		testQuery(c,"select * FROM icd_9_descriptions i_9 JOIN cm_gems g ON i_9.icd_9_code = g.icd_9_code JOIN icd_10_cm_descriptions i_10 ON g.icd_10_code = i_10.icd_10_code where g.icd_9_code = 'V222'");
 
 	atexit(enet_deinitialize);
 

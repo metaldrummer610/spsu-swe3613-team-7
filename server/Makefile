@@ -1,7 +1,7 @@
 CC=g++
 EXENAME=server
 CFLAGS=-Wall -I./include/ -I../common/include/ -o $(EXENAME)
-LDFLAGS=/usr/local/lib/libenet.a -lICDNetwork -L../common/bin/
+LDFLAGS=/usr/local/lib/libenet.a -lICDNetwork -L../common/bin/ -lpqxx -lpq 
 SRC=src/main.cpp
 
 all : $(SRC)
@@ -10,3 +10,6 @@ all : $(SRC)
 
 clean:
 	rm -f bin/$(EXENAME)
+
+run:
+	./bin/server
