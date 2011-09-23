@@ -132,17 +132,21 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 	if(DEBUG)
 		printResults(r);
 
+	void* codeBuffer = codeListToBuffer(v);
+	int bufferSize = 0;
+	memcpy(&bufferSize, codeBuffer, sizeof(int));
 
+	ICDResponsePacket* resp = new ICDResponsePacket(ICD_RESPONSE_CONVERT_9_TO_10, codeBuffer, bufferSize);
 
 	// Now that we have the string, we can do as we wish with it.
 	// For the demo purposes, we are just going to return what we got.
 	// In the actual implementation, we would make calls to the database and stuff
-	ICDResponsePacket* resp = new ICDResponsePacket(ICD_RESPONSE_CONVERT_9_TO_10);
-	resp->setData(&cstr, packet->getArgLen()); // This could be done in the ctor, but I've done this as an example
-	
+//	ICDResponsePacket* resp = new ICDResponsePacket(ICD_RESPONSE_CONVERT_9_TO_10);
+//	resp->setData(&cstr, packet->getArgLen()); // This could be done in the ctor, but I've done this as an example
 
 	sendPacket(resp, peer);
 	delete resp;
+	delete codeBuffer;
 }
 
 void handlePacket(ENetPacket* p, ENetPeer* peer)
@@ -224,6 +228,15 @@ int main()
 		result r=handleQuery(cstr);	
 		//Process Results
 		std::vector<ICD10> v = process9To10Results(r);
+
+		void* codeBuffer = codeListToBuffer(v);
+		int bufferSize = 0;
+		memcpy(&bufferSize, codeBuffer, sizeof(int));
+
+		ICDResponsePacket* response = new ICDResponsePacket(ICD_RESPONSE_CONVERT_9_TO_10, codeBuffer, bufferSize);
+		delete response;
+		delete codeBuffer;
+//		sendPacket(response, peer);
 		printResults(r);
 	}	
 	
