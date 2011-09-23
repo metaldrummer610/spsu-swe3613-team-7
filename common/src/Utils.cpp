@@ -5,7 +5,7 @@
 
 void dump(const char* str)
 {
-	std::cout << str << std::endl;
+	std::cout << str;
 }
 
 void dumpBuffer(const char* buffer, int bufferSize)

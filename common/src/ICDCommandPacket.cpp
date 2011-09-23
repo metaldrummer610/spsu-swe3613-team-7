@@ -28,7 +28,7 @@ void* ICDCommandPacket::toBuffer()
 	// Add the args themselves
 	memcpy(ptr, args, argLen);
 
-	dumpBuffer(ret, size + sizeof(int));
+	dumpBuffer((const char*)ret, size + sizeof(int));
 
 	return ret;
 }
