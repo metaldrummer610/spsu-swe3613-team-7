@@ -19,5 +19,7 @@
 #include "ICDCommandPacket.h"
 #include "ICDResponsePacket.h"
 #include "ICDNetworkHelpers.h"
+#include "CodeList.h"
+#include "Utils.h"
 
 #endif

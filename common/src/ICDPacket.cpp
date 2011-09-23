@@ -3,6 +3,7 @@
 #include "ICDCommands.h"
 #include "ICDCommandPacket.h"
 #include "ICDResponsePacket.h"
+#include "Utils.h"
 #include <string.h>
 
 ICDPacket* ICDPacket::createPacketFromBuffer(void* buf)
@@ -16,10 +17,13 @@ ICDPacket* ICDPacket::createPacketFromBuffer(void* buf)
 	memcpy(&size, ptr, sizeof(int));
 	ptr += sizeof(int);
 
+	dumpBuffer((const char*)ptr, size);
+
 	if(size > 0)
 	{
 		int type = 0;
 		memcpy(&type, ptr, sizeof(int));
+		ptr += sizeof(int);
 
 		switch(type)
 		{
