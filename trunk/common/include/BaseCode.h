@@ -34,8 +34,6 @@ int codeToInt(CodeType t);
 */
 CodeType intToCode(int i);
 
-#define BASE_CODE_BUFFER_SIZE(x) sizeof(int) + sizeof(int) + x
-
 /**
 * This is the base class for all ICD9 and ICD10 codes. It provides functions for converting to and from void*'s for network communication.
 */
@@ -50,10 +48,14 @@ public:
 	/**
 	* Converts a code to a buffer of bytes. The format of that buffer is:
 	*
-	* (int)(int)(string)
+	* (int)(int)(string)(int)(string)(int)(string)
 	*	int 1 <- type of code
 	*	int 2 <- size of code
-	*	string <- actual code
+	*	string 1 <- actual code
+	*  int 3 <- size of description string
+	*	string 2 <- description string
+	*	int 4 <- size of flags string
+	*	string 3 <- flags string
 	*/
 	virtual void* toBuffer();
 	virtual void fromBuffer(void* buf);									//!< Converts a buffer of bytes to a code
@@ -74,7 +76,7 @@ public:
 	void setDescSize(int i) { descSize = i; }							//!< Sets the size of the description
 	void setFlagsSize(int i) { flagsSize = i; }						//!< Sets the size of the flags
 
-	static BaseCode* createCodeFromBuffer(void* buf);				//!< Creates a generic BaseCode object from a buffer of bytes. A factory method.
+	virtual int getSizeInBytes();											//!< Returns the size of this object in bytes
 protected:
 	CodeType type;																//!< The type of code
 	char* code;																	//!< The code

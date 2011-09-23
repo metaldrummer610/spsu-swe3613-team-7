@@ -8,7 +8,7 @@ void* codeListToBuffer(std::vector<BaseCode*> list)
 	int bufferLen = 0;
 	for(std::vector<BaseCode*>::iterator it = list.begin(); it != list.end(); it++)
 	{
-		bufferLen += BASE_CODE_BUFFER_SIZE((*it)->getCodeSize());
+		bufferLen += (*it)->getSizeInBytes();
 	}
 
 	void* buf = new char[bufferLen + sizeof(int)];
@@ -23,7 +23,7 @@ void* codeListToBuffer(std::vector<BaseCode*> list)
 		BaseCode* code = (BaseCode*)(*it);
 		
 		void* codeBuf = code->toBuffer();
-		int len = BASE_CODE_BUFFER_SIZE(code->getCodeSize());
+		int len = code->getSizeInBytes();
 
 		memcpy(ptr, codeBuf, len);
 		ptr += len;
@@ -49,7 +49,7 @@ std::vector<BaseCode*> bufferToCodeList(void* buf)
 		BaseCode* code = new BaseCode();
 		code->fromBuffer(ptr);
 
-		int len = BASE_CODE_BUFFER_SIZE(code->getCodeSize());
+		int len = code->getSizeInBytes();
 		ptr += len;
 
 		ret.push_back(code);
