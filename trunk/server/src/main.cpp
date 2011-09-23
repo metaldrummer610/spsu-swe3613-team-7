@@ -11,12 +11,9 @@ using namespace pqxx;
 #define DEBUG 1
 #define PORT 9000
 
-
 ENetHost* server;
 ENetAddress address;
 int peerNumber = 0;
-
-
 
 void printResults(result r) {
 	for(result::const_iterator row=r.begin();row!=r.end();++row) {
@@ -83,12 +80,17 @@ CREATE TABLE cm_gems (
 	PRIMARY KEY (icd_9_code, icd_10_code, flags)
 );	
 	*/
-	char *query = new char[strlen(first_half)+strlen(cstr)+2];
+/*	char *query = new char[strlen(first_half)+strlen(cstr)+2];
 	memset(query, 0, strlen(first_half)+strlen(cstr)+2);	
 	strncpy(query,first_half,strlen(first_half));
 	strcat(query,cstr);
 	strcat(query,"'");
-	return query;
+	*/
+
+	std::string query = first_half;
+	query.append(cstr);
+	query.append("';");
+	return (char*)query.c_str();
 }
 
 result handleQuery(char* cstr) {
@@ -103,18 +105,17 @@ result handleQuery(char* cstr) {
 	return r;	
 }
 
-std::vector<ICD10> process9To10Results(result r) {
-	std::vector<ICD10> v;	
+std::vector<BaseCode*> process9To10Results(result r) {
+	std::vector<BaseCode*> v;	
 	for(result::const_iterator row=r.begin();row!=r.end();++row) {
-		v.push_back(ICD10((char*)row[2].c_str(),(int)strlen(row[2].c_str()),(char*)row[3].c_str(),strlen(row[3].c_str()),(char*)row[4].c_str(),strlen(row[4].c_str())));
+		ICD10* code = new ICD10((char*)row[2].c_str(),(int)strlen(row[2].c_str()),(char*)row[3].c_str(),strlen(row[3].c_str()),(char*)row[4].c_str(),strlen(row[4].c_str()));
+		v.push_back(code);
 	}
 	return v;
 }
 
-
 void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 {
-
 	//TODO: Jeff: We would add calls to the database here
 	// Since we know this is a convert 9 to 10 packet, we know what the payload is
 	// The payload is a string, and the length of that payload is the string length
@@ -124,10 +125,13 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 	memset(cstr, 0, packet->getArgLen()); // Clear out the memory, just in case :)
 	strncpy(cstr, (char*)packet->getArgs(), packet->getArgLen());
 
+	std::cout << "Printing the size of the args: " << packet->getArgLen() << "." << std::endl;
+	std::cout << "Printing the string we got from the client side: " << cstr << "." << std::endl;
+
 	//Handle Query
-	result r=handleQuery(cstr);	
+/*	result r=handleQuery(cstr);	
 	//Process Results
-	std::vector<ICD10> v = process9To10Results(r);
+	std::vector<BaseCode*> v = process9To10Results(r);
 	
 	if(DEBUG)
 		printResults(r);
@@ -146,7 +150,17 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 
 	sendPacket(resp, peer);
 	delete resp;
-	delete codeBuffer;
+	delete (char*)codeBuffer;
+
+	// Delete the vector
+	for(std::vector<BaseCode*>::iterator it = v.begin(); it != v.end(); it++)
+	{
+		delete (*it);
+		*it = NULL;
+	}
+
+	v.clear();
+	*/
 }
 
 void handlePacket(ENetPacket* p, ENetPeer* peer)
@@ -222,7 +236,8 @@ int main()
 		exit(EXIT_FAILURE);
 	}
 	
-	if(DEBUG) {	
+	// This code won't compile without modifying it... Don't feel like it :)
+/*	if(DEBUG) {	
 		char *cstr = (char*)"8962";	
 		//Handle Query
 		result r=handleQuery(cstr);	
@@ -238,13 +253,8 @@ int main()
 		delete codeBuffer;
 //		sendPacket(response, peer);
 		printResults(r);
-	}	
+	}	*/
 	
-
-
-
-
-
 	atexit(enet_deinitialize);
 
 	loop();
