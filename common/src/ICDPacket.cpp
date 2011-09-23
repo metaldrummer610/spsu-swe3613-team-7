@@ -18,7 +18,7 @@ ICDPacket* ICDPacket::createPacketFromBuffer(void* buf)
 	memcpy(&size, ptr, sizeof(int));
 	ptr += sizeof(int);
 
-	dumpBuffer((const char*)buf, size + sizeof(int));
+//	dumpBuffer((const char*)buf, size + sizeof(int));
 
 	if(size > 0)
 	{
@@ -40,7 +40,7 @@ ICDPacket* ICDPacket::createPacketFromBuffer(void* buf)
 
 					void* args = new char[argLen];
 					memcpy(args, ptr, argLen);
-					dumpBuffer((const char*)ptr, argLen);
+//					dumpBuffer((const char*)ptr, argLen);
 
 					ret = new ICDCommandPacket(commandType, args, argLen);
 				}

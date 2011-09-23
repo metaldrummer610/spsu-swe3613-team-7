@@ -121,15 +121,13 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 	// The payload is a string, and the length of that payload is the string length
 	// Therefore, we can just do a strncpy and stuff it into a c-string
 
-	char cstr[packet->getArgLen()];
+	char cstr[packet->getArgLen() + 1];
 	memset(cstr, 0, packet->getArgLen()); // Clear out the memory, just in case :)
 	strncpy(cstr, (char*)packet->getArgs(), packet->getArgLen());
-
-	std::cout << "Printing the size of the args: " << packet->getArgLen() << "." << std::endl;
-	std::cout << "Printing the string we got from the client side: " << cstr << "." << std::endl;
-
+	cstr[packet->getArgLen()] = '\0';
+	
 	//Handle Query
-/*	result r=handleQuery(cstr);	
+	result r=handleQuery(cstr);	
 	//Process Results
 	std::vector<BaseCode*> v = process9To10Results(r);
 	
@@ -142,15 +140,9 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 
 	ICDResponsePacket* resp = new ICDResponsePacket(ICD_RESPONSE_CONVERT_9_TO_10, codeBuffer, bufferSize);
 
-	// Now that we have the string, we can do as we wish with it.
-	// For the demo purposes, we are just going to return what we got.
-	// In the actual implementation, we would make calls to the database and stuff
-//	ICDResponsePacket* resp = new ICDResponsePacket(ICD_RESPONSE_CONVERT_9_TO_10);
-//	resp->setData(&cstr, packet->getArgLen()); // This could be done in the ctor, but I've done this as an example
-
 	sendPacket(resp, peer);
 	delete resp;
-	delete (char*)codeBuffer;
+//	delete (char*)codeBuffer;
 
 	// Delete the vector
 	for(std::vector<BaseCode*>::iterator it = v.begin(); it != v.end(); it++)
@@ -160,7 +152,6 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 	}
 
 	v.clear();
-	*/
 }
 
 void handlePacket(ENetPacket* p, ENetPeer* peer)
