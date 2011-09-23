@@ -9,7 +9,7 @@
 using namespace pqxx;
 
 //Hi.  I'm Jeff's debugging macro.  Change me to 0 to remove his garbage output.
-#define DEBUG 1
+#define DEBUG 0
 #define PORT 9000
 
 
@@ -104,27 +104,12 @@ result handleQuery(char* cstr) {
 	return r;	
 }
 
-void processResults(result r) {
+std::vector<ICD10> process9To10Results(result r) {
+	std::vector<ICD10> v;	
 	for(result::const_iterator row=r.begin();row!=r.end();++row) {
-		ICD10* thisCode = new ICD10((char*)row[2].c_str(),(int)strlen(row[2].c_str()),(char*)row[3].c_str(),strlen(row[3].c_str()),(char*)row[4].c_str(),strlen(row[4].c_str()));
-
-
-/*
-		for(result::const_iterator row=r.begin();row!=r.end();++row) {
-		std::cout << "[";
-   	for(result::tuple::const_iterator field=row->begin();field!=row->end();++field) {
-      	std::cout << field->c_str();
-			if(field!=row->end()-1)
-				std::cout << ",";		
-		}
-		std::cout << "]" << std::endl;
+		v.push_back(ICD10((char*)row[2].c_str(),(int)strlen(row[2].c_str()),(char*)row[3].c_str(),strlen(row[3].c_str()),(char*)row[4].c_str(),strlen(row[4].c_str())));
 	}
-	std::cout << "Results:" << r.size() << std::endl;
-	
-	*/
-	
-			
-	}
+	return v;
 }
 
 
@@ -139,6 +124,16 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 	char cstr[packet->getArgLen()];
 	memset(cstr, 0, packet->getArgLen()); // Clear out the memory, just in case :)
 	strncpy(cstr, (char*)packet->getArgs(), packet->getArgLen());
+
+	//Handle Query
+	result r=handleQuery(cstr);	
+	//Process Results
+	std::vector<ICD10> v = process9To10Results(r);
+	
+	if(DEBUG)
+		printResults(r);
+
+
 
 	// Now that we have the string, we can do as we wish with it.
 	// For the demo purposes, we are just going to return what we got.
@@ -230,10 +225,11 @@ int main()
 	//Handle Query
 	result r=handleQuery(cstr);	
 	//Process Results
-	processResults(r);
-
+	std::vector<ICD10> v = process9To10Results(r);
+	
 	if(DEBUG)
 		printResults(r);
+
 
 
 
