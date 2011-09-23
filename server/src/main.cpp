@@ -17,6 +17,8 @@ ENetHost* server;
 ENetAddress address;
 int peerNumber = 0;
 
+
+
 void printResults(result r) {
 	for(result::const_iterator row=r.begin();row!=r.end();++row) {
 		std::cout << "[";
@@ -30,20 +32,18 @@ void printResults(result r) {
 	std::cout << "Results:" << r.size() << std::endl;
 }
 
-void testQuery(connection *c, std::string query) {
+result testQuery(connection *c, std::string query) {
+	result r;	
 	try {
 		work *w = new work(*c);
-		if(DEBUG)
-			std::cout << "Transaction created.  Yeeeeeeeah!!1eleven" << std::endl;
-		result r = w->exec(query);
+		r = w->exec(query);
      		w->commit();
-		if(DEBUG)
-			printResults(r);
 	}
 	catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	return r;
 }
 
 void disconnect(connection *c) {
@@ -82,9 +82,7 @@ CREATE TABLE cm_gems (
 	icd_10_code VARCHAR(10) REFERENCES icd_10_cm_descriptions,
 	flags CHAR(5),
 	PRIMARY KEY (icd_9_code, icd_10_code, flags)
-);
-	
-	
+);	
 	*/
 	char *query = new char[strlen(first_half)+strlen(cstr)+2];
 	memset(query, 0, strlen(first_half)+strlen(cstr)+2);	
@@ -93,6 +91,42 @@ CREATE TABLE cm_gems (
 	strcat(query,"'");
 	return query;
 }
+
+result handleQuery(char* cstr) {
+	connection *c = connectToDatabase();
+	char* query = constructQuery(cstr);		
+	if(DEBUG)	
+		std::cout << "query=" << query << std::endl;
+	result r;
+	if(DEBUG)
+		r = testQuery(c,query);
+	disconnect(c);	
+	return r;	
+}
+
+void processResults(result r) {
+	for(result::const_iterator row=r.begin();row!=r.end();++row) {
+		ICD10* thisCode = new ICD10((char*)row[2].c_str(),(int)strlen(row[2].c_str()),(char*)row[3].c_str(),strlen(row[3].c_str()),(char*)row[4].c_str(),strlen(row[4].c_str()));
+
+
+/*
+		for(result::const_iterator row=r.begin();row!=r.end();++row) {
+		std::cout << "[";
+   	for(result::tuple::const_iterator field=row->begin();field!=row->end();++field) {
+      	std::cout << field->c_str();
+			if(field!=row->end()-1)
+				std::cout << ",";		
+		}
+		std::cout << "]" << std::endl;
+	}
+	std::cout << "Results:" << r.size() << std::endl;
+	
+	*/
+	
+			
+	}
+}
+
 
 void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 {
@@ -105,20 +139,6 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 	char cstr[packet->getArgLen()];
 	memset(cstr, 0, packet->getArgLen()); // Clear out the memory, just in case :)
 	strncpy(cstr, (char*)packet->getArgs(), packet->getArgLen());
-
-	//Connect to the Database. 
-	connection *c = connectToDatabase();
-	
-	char* query = constructQuery(cstr);	
-	
-	if(DEBUG)	
-		std::cout << "query=" << query << std::endl;
-
-	if(DEBUG)
-		testQuery(c,query);
-	
-	disconnect(c);	
-	
 
 	// Now that we have the string, we can do as we wish with it.
 	// For the demo purposes, we are just going to return what we got.
@@ -204,16 +224,19 @@ int main()
 		exit(EXIT_FAILURE);
 	}
 		
+	char *cstr = (char*)"8962";
 
-	//Connect to the Database. 
-	connection *c = connectToDatabase();
-	char *cstr = (char*)"6259";
-	
-	char *query = constructQuery(cstr);
+	//This will be put up in the handleConvert9To10Command method when i'm done testing it	 
+	//Handle Query
+	result r=handleQuery(cstr);	
+	//Process Results
+	processResults(r);
+
 	if(DEBUG)
-		testQuery(c,query);
-	disconnect(c);	
-	
+		printResults(r);
+
+
+
 
 	atexit(enet_deinitialize);
 
