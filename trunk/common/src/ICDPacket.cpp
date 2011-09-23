@@ -5,6 +5,7 @@
 #include "ICDResponsePacket.h"
 #include "Utils.h"
 #include <string.h>
+#include <iostream>
 
 ICDPacket* ICDPacket::createPacketFromBuffer(void* buf)
 {
@@ -17,7 +18,7 @@ ICDPacket* ICDPacket::createPacketFromBuffer(void* buf)
 	memcpy(&size, ptr, sizeof(int));
 	ptr += sizeof(int);
 
-	dumpBuffer((const char*)ptr, size);
+	dumpBuffer((const char*)buf, size + sizeof(int));
 
 	if(size > 0)
 	{
@@ -39,6 +40,7 @@ ICDPacket* ICDPacket::createPacketFromBuffer(void* buf)
 
 					void* args = new char[argLen];
 					memcpy(args, ptr, argLen);
+					dumpBuffer((const char*)ptr, argLen);
 
 					ret = new ICDCommandPacket(commandType, args, argLen);
 				}
