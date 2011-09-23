@@ -18,8 +18,9 @@
 class ICD10 : public BaseCode
 {
 public:
-	ICD10();											//!< Default constructor
-	ICD10(char* code, int len);				//!< Initializes with a specific code as a char*
+	ICD10();																										//!< Default constructor
+	ICD10(char* code, int len);																			//!< Initializes with a specific code as a char*
+	ICD10(char* code, int len, char* desc, int descSize, char* flags, int flagsSize);	//!< Initialized with a code, description, and flags	
 };
 
 #endif
