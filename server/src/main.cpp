@@ -4,6 +4,7 @@
 #include <string>
 #include <string.h>
 #include <pqxx/pqxx>
+#include "BaseCode.h"
 
 using namespace pqxx;
 
@@ -16,6 +17,19 @@ ENetHost* server;
 ENetAddress address;
 int peerNumber = 0;
 
+void printResults(result r) {
+	for(result::const_iterator row=r.begin();row!=r.end();++row) {
+		std::cout << "[";
+   	for(result::tuple::const_iterator field=row->begin();field!=row->end();++field) {
+      	std::cout << field->c_str();
+			if(field!=row->end()-1)
+				std::cout << ",";		
+		}
+		std::cout << "]" << std::endl;
+	}
+	std::cout << "Results:" << r.size() << std::endl;
+}
+
 void testQuery(connection *c, std::string query) {
 	try {
 		work *w = new work(*c);
@@ -24,13 +38,16 @@ void testQuery(connection *c, std::string query) {
 		result r = w->exec(query);
      		w->commit();
 		if(DEBUG)
-			std::cout << "query=" << query << "=" << r[0][0].c_str() << std::endl;
-
+			printResults(r);
 	}
 	catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+}
+
+void disconnect(connection *c) {
+	c->disconnect();	
 }
 
 connection* connectToDatabase() {
@@ -41,14 +58,45 @@ connection* connectToDatabase() {
 			std::cout << "Connected to swe3613@localhost." << std::endl;
 		return c;
 	}
-   	catch (const std::exception &e) {
-   		std::cerr << e.what() << std::endl;
+   catch (const std::exception &e) {
+   	std::cerr << e.what() << std::endl;
 		exit(EXIT_FAILURE);
-   	}
+   }
+}
+
+char* constructQuery(char* cstr) {
+	char *first_half = (char*)"select g.icd_9_code, i_9.icd_9_description, g.icd_10_code, i_10.icd_10_description, g.flags FROM icd_9_descriptions i_9 JOIN cm_gems g ON i_9.icd_9_code = g.icd_9_code JOIN icd_10_cm_descriptions i_10 ON g.icd_10_code = i_10.icd_10_code where g.icd_9_code = '";
+	/*
+CREATE TABLE icd_9_descriptions (
+	icd_9_code VARCHAR(10) PRIMARY KEY, 
+	icd_9_description VARCHAR(500) DEFAULT 'No Description Found'
+);
+
+CREATE TABLE icd_10_cm_descriptions (
+	icd_10_code VARCHAR(10) PRIMARY KEY,
+	icd_10_description VARCHAR(500) DEFAULT 'No Description Found' 
+);
+
+CREATE TABLE cm_gems (
+	icd_9_code VARCHAR(10) REFERENCES icd_9_descriptions,
+	icd_10_code VARCHAR(10) REFERENCES icd_10_cm_descriptions,
+	flags CHAR(5),
+	PRIMARY KEY (icd_9_code, icd_10_code, flags)
+);
+	
+	
+	*/
+	char *query = new char[strlen(first_half)+strlen(cstr)+2];
+	memset(query, 0, strlen(first_half)+strlen(cstr)+2);	
+	strncpy(query,first_half,strlen(first_half));
+	strcat(query,cstr);
+	strcat(query,"'");
+	return query;
 }
 
 void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 {
+
 	//TODO: Jeff: We would add calls to the database here
 	// Since we know this is a convert 9 to 10 packet, we know what the payload is
 	// The payload is a string, and the length of that payload is the string length
@@ -58,11 +106,26 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 	memset(cstr, 0, packet->getArgLen()); // Clear out the memory, just in case :)
 	strncpy(cstr, (char*)packet->getArgs(), packet->getArgLen());
 
+	//Connect to the Database. 
+	connection *c = connectToDatabase();
+	
+	char* query = constructQuery(cstr);	
+	
+	if(DEBUG)	
+		std::cout << "query=" << query << std::endl;
+
+	if(DEBUG)
+		testQuery(c,query);
+	
+	disconnect(c);	
+	
+
 	// Now that we have the string, we can do as we wish with it.
 	// For the demo purposes, we are just going to return what we got.
 	// In the actual implementation, we would make calls to the database and stuff
 	ICDResponsePacket* resp = new ICDResponsePacket(ICD_RESPONSE_CONVERT_9_TO_10);
 	resp->setData(&cstr, packet->getArgLen()); // This could be done in the ctor, but I've done this as an example
+	
 
 	sendPacket(resp, peer);
 	delete resp;
@@ -140,13 +203,17 @@ int main()
 		std::cout << "server is null.... that is bad" << std::endl;
 		exit(EXIT_FAILURE);
 	}
+		
 
-	//Connect to the Database.  Not sure if this is in the right spot.
+	//Connect to the Database. 
 	connection *c = connectToDatabase();
+	char *cstr = (char*)"6259";
+	
+	char *query = constructQuery(cstr);
 	if(DEBUG)
-		testQuery(c,"Select count(*) from cm_gems");
-	if(DEBUG)
-		testQuery(c,"select * FROM icd_9_descriptions i_9 JOIN cm_gems g ON i_9.icd_9_code = g.icd_9_code JOIN icd_10_cm_descriptions i_10 ON g.icd_10_code = i_10.icd_10_code where g.icd_9_code = 'V222'");
+		testQuery(c,query);
+	disconnect(c);	
+	
 
 	atexit(enet_deinitialize);
 

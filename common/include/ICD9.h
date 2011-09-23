@@ -20,6 +20,7 @@ class ICD9 : public BaseCode
 public:
 	ICD9();										//!< Default constructor
 	ICD9(char* code, int len);				//!< Initializes with a specific code as a char*
+	ICD9(char* code, int len, char* desc, int descSize, char* flags, int flagsSize); //!< Initializes with a specific code, description, and flags
 };
 
 #endif
