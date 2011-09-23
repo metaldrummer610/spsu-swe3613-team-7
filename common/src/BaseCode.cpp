@@ -31,10 +31,15 @@ CodeType intToCode(int i)
 	}
 }
 
+int BaseCode::getSizeInBytes()
+{
+	return sizeof(int) + sizeof(int) + codeSize + sizeof(int) + descSize + sizeof(int) + flagsSize;
+}
+
 void* BaseCode::toBuffer()
 {
 	int codeType = codeToInt(type);
-	void* ret = new char[sizeof(int) + sizeof(int) + codeSize];
+	void* ret = new char[this->getSizeInBytes()];
 	char* ptr = (char*)ret;
 
 	memcpy(ptr, &codeType, sizeof(int));
@@ -44,6 +49,18 @@ void* BaseCode::toBuffer()
 	ptr += sizeof(int);
 
 	strncpy(ptr, code, codeSize);
+	ptr += codeSize;
+
+	memcpy(ptr, &descSize, sizeof(int));
+	ptr += sizeof(int);
+
+	memcpy(ptr, desc, descSize);
+	ptr += descSize;
+
+	memcpy(ptr, &flagsSize, sizeof(int));
+	ptr += sizeof(int);
+
+	memcpy(ptr, flags, flagsSize);
 	return ret;
 }
 
@@ -62,6 +79,23 @@ void BaseCode::fromBuffer(void* buf)
 	memcpy(&codeSize, ptr, sizeof(int));
 	ptr += sizeof(int);
 
+	code = new char[codeSize];
 	memset(code, 0, codeSize);
 	strncpy(code, ptr, codeSize);
+	ptr += codeSize;
+
+	memcpy(&descSize, ptr, sizeof(int));
+	ptr += sizeof(int);
+
+	desc = new char[descSize];
+	memset(desc, 0, descSize);
+	strncpy(desc, ptr, descSize);
+	ptr += descSize;
+
+	memcpy(&flagsSize, ptr, sizeof(int));
+	ptr += sizeof(int);
+
+	flags = new char[flagsSize];
+	memset(flags, 0, flagsSize);
+	strncpy(flags, ptr, flagsSize);
 }
