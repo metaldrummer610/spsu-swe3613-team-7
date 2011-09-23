@@ -4,12 +4,11 @@
 #include <string>
 #include <string.h>
 #include <pqxx/pqxx>
-#include "BaseCode.h"
 
 using namespace pqxx;
 
 //Hi.  I'm Jeff's debugging macro.  Change me to 0 to remove his garbage output.
-#define DEBUG 0
+#define DEBUG 1
 #define PORT 9000
 
 
@@ -218,17 +217,16 @@ int main()
 		std::cout << "server is null.... that is bad" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-		
-	char *cstr = (char*)"8962";
-
-	//This will be put up in the handleConvert9To10Command method when i'm done testing it	 
-	//Handle Query
-	result r=handleQuery(cstr);	
-	//Process Results
-	std::vector<ICD10> v = process9To10Results(r);
 	
-	if(DEBUG)
+	if(DEBUG) {	
+		char *cstr = (char*)"8962";	
+		//Handle Query
+		result r=handleQuery(cstr);	
+		//Process Results
+		std::vector<ICD10> v = process9To10Results(r);
 		printResults(r);
+	}	
+	
 
 
 
