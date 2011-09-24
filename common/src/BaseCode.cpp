@@ -4,6 +4,7 @@
 #include <string.h>
 #include <string>
 #include <iostream>
+#include <stdio.h>
 
 int codeToInt(CodeType t)
 {
