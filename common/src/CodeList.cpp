@@ -54,6 +54,7 @@ std::vector<BaseCode*> bufferToCodeList(void* buf)
 
 	int numCodes = 0;
 	memcpy(&numCodes, ptr, sizeof(int));
+	ptr += sizeof(int);
 
 	for(int i = 0; i < numCodes; i++)
 	{
