@@ -137,6 +137,7 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 	void* codeBuffer = codeListToBuffer(v);
 	int bufferSize = 0;
 	memcpy(&bufferSize, codeBuffer, sizeof(int));
+	bufferSize += sizeof(int) + sizeof(int);
 	std::cout << "Dumping the code buffer" << std::endl;
 	dumpBuffer((const char*)codeBuffer, bufferSize);
 
