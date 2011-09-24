@@ -12,7 +12,7 @@ all : $(SRC)
 	$(CC) $(CFLAGS) $(SRC)
 	ar rvs $(LIBNAME) $(OBJ)
 	mv $(LIBNAME) bin/
-	$(MAKE) test
+#	$(MAKE) test
 
 test:
 	cd tests && $(MAKE)

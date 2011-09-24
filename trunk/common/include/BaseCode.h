@@ -87,4 +87,6 @@ protected:
 	int flagsSize;																//!< The size of the flags
 };
 
+std::ostream& operator<<(std::ostream& out, BaseCode* code);
+
 #endif
