@@ -3,6 +3,13 @@
 #include "ICD10.h"
 #include <string.h>
 
+/*
+Code List:
+	(int)(int)[code][code][code]...
+	(int) <- the total length of the code list's payload including the number of elements
+	(int) <- the number of elements in the list
+	[code]... <- each individual code
+*/
 void* codeListToBuffer(std::vector<BaseCode*> list)
 {
 	int bufferLen = 0;
@@ -11,10 +18,13 @@ void* codeListToBuffer(std::vector<BaseCode*> list)
 		bufferLen += (*it)->getSizeInBytes();
 	}
 
-	void* buf = new char[bufferLen + sizeof(int)];
+	void* buf = new char[bufferLen + sizeof(int) + sizeof(int)];
 	char* ptr = (char*)buf;
 
 	int numElements = list.size();
+	memcpy(ptr, &bufferLen, sizeof(int));
+	ptr += sizeof(int);
+
 	memcpy(ptr, &numElements, sizeof(int));
 	ptr += sizeof(int);
 
@@ -40,6 +50,7 @@ std::vector<BaseCode*> bufferToCodeList(void* buf)
 
 	std::vector<BaseCode*> ret;
 	char* ptr = (char*)buf;
+	ptr += sizeof(int);
 
 	int numCodes = 0;
 	memcpy(&numCodes, ptr, sizeof(int));

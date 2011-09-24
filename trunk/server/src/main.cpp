@@ -80,17 +80,17 @@ CREATE TABLE cm_gems (
 	PRIMARY KEY (icd_9_code, icd_10_code, flags)
 );	
 	*/
-/*	char *query = new char[strlen(first_half)+strlen(cstr)+2];
+	char *query = new char[strlen(first_half)+strlen(cstr)+2];
 	memset(query, 0, strlen(first_half)+strlen(cstr)+2);	
 	strncpy(query,first_half,strlen(first_half));
 	strcat(query,cstr);
 	strcat(query,"'");
-	*/
+	return query;
 
-	std::string query = first_half;
+/*	std::string query = first_half;
 	query.append(cstr);
-	query.append("';");
-	return (char*)query.c_str();
+	query.append("'");
+	return (char*)query.c_str();*/
 }
 
 result handleQuery(char* cstr) {
@@ -137,6 +137,8 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 	void* codeBuffer = codeListToBuffer(v);
 	int bufferSize = 0;
 	memcpy(&bufferSize, codeBuffer, sizeof(int));
+	std::cout << "Dumping the code buffer" << std::endl;
+	dumpBuffer((const char*)codeBuffer, bufferSize);
 
 	ICDResponsePacket* resp = new ICDResponsePacket(ICD_RESPONSE_CONVERT_9_TO_10, codeBuffer, bufferSize);
 
