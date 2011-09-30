@@ -1,9 +1,9 @@
-#include <FL/FL.h>
-#include <FL/FL_Window.h>
-#include <FL/FL_Box.h>
-#include <FL/FL_Button.h>
-#include <FL/FL_Input.h>
-#include <FL/FL_Select_Browser.h>
+#include <FL/Fl.H>
+#include <FL/Fl_Window.H>
+#include <FL/Fl_Box.H>
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Input.H>
+#include <FL/Fl_Select_Browser.H>
 
 #define HAVE_PTHREAD_H 1
 #include "threads.h" // FLTK Threads Support
@@ -69,7 +69,7 @@ void initEnet()
 		exit(EXIT_FAILURE);
 	}
 
-	enet_address_set_host(&address, "10.0.1.7");
+	enet_address_set_host(&address, "localhost");
 	address.port = 9000;
 
 	peer = enet_host_connect(client, &address, 2, 0);
