@@ -1,3 +1,29 @@
+/**
+* ICD Converter Server
+*
+* \author Robbie Diaz
+* \author Jeff Lett
+*
+* Here's the DB schema:
+* CREATE TABLE icd_9_descriptions (
+*	 icd_9_code VARCHAR(10) PRIMARY KEY, 
+*	 icd_9_description VARCHAR(500) DEFAULT 'No Description Found'
+* );
+*
+* CREATE TABLE icd_10_cm_descriptions (
+*	 icd_10_code VARCHAR(10) PRIMARY KEY,
+*	 icd_10_description VARCHAR(500) DEFAULT 'No Description Found' 
+* );
+*
+* CREATE TABLE cm_gems (
+*	 icd_9_code VARCHAR(10) REFERENCES icd_9_descriptions,
+*	 icd_10_code VARCHAR(10) REFERENCES icd_10_cm_descriptions,
+*	 flags CHAR(5),
+* 	 PRIMARY KEY (icd_9_code, icd_10_code, flags)
+* );	
+
+*/
+
 #include <enet/enet.h>
 #include <iostream>
 #include "ICDNetwork.h"
@@ -7,14 +33,18 @@
 
 using namespace pqxx;
 
-//Hi.  I'm Jeff's debugging macro.  Change me to 0 to remove his garbage output.
-#define DEBUG 1
+/// Jeff's debugging macro.  Change me to 0 to remove his garbage output
+#define DEBUG 0
 #define PORT 9000
 
 ENetHost* server;
 ENetAddress address;
 int peerNumber = 0;
 
+/**
+* Prints a result object
+* \param r The result to print
+*/
 void printResults(result r) {
 	for(result::const_iterator row=r.begin();row!=r.end();++row) {
 		std::cout << "[";
@@ -28,7 +58,13 @@ void printResults(result r) {
 	std::cout << "Results:" << r.size() << std::endl;
 }
 
-result testQuery(connection *c, std::string query) {
+/**
+* Runs a query
+* \param c The connection to use
+* \param query The query to search
+* \return The result of the search
+*/
+result runQuery(connection *c, std::string query) {
 	result r;	
 	try {
 		work *w = new work(*c);
@@ -42,10 +78,18 @@ result testQuery(connection *c, std::string query) {
 	return r;
 }
 
+/**
+* Disconnects a connection
+* \param c The connection to close
+*/
 void disconnect(connection *c) {
 	c->disconnect();	
 }
 
+/**
+* Connects to a database
+* \return The connection that was established
+*/
 connection* connectToDatabase() {
 	try {
 		//Make connection
@@ -60,59 +104,134 @@ connection* connectToDatabase() {
    }
 }
 
-char* constructQuery(char* cstr) {
-	char *first_half = (char*)"select g.icd_9_code, i_9.icd_9_description, g.icd_10_code, i_10.icd_10_description, g.flags FROM icd_9_descriptions i_9 JOIN cm_gems g ON i_9.icd_9_code = g.icd_9_code JOIN icd_10_cm_descriptions i_10 ON g.icd_10_code = i_10.icd_10_code where g.icd_9_code = '";
-	/*
-CREATE TABLE icd_9_descriptions (
-	icd_9_code VARCHAR(10) PRIMARY KEY, 
-	icd_9_description VARCHAR(500) DEFAULT 'No Description Found'
-);
-
-CREATE TABLE icd_10_cm_descriptions (
-	icd_10_code VARCHAR(10) PRIMARY KEY,
-	icd_10_description VARCHAR(500) DEFAULT 'No Description Found' 
-);
-
-CREATE TABLE cm_gems (
-	icd_9_code VARCHAR(10) REFERENCES icd_9_descriptions,
-	icd_10_code VARCHAR(10) REFERENCES icd_10_cm_descriptions,
-	flags CHAR(5),
-	PRIMARY KEY (icd_9_code, icd_10_code, flags)
-);	
-	*/
-	char *query = new char[strlen(first_half)+strlen(cstr)+2];
+/**
+* Gets a query to search 9 codes
+* \param cstr The char* to search for
+* \return A query to search 9 codes
+*/
+char* get9CodeQuery(char* cstr) {
+	char *first_half = (char*)"select g.icd_9_code, i_9.icd_9_description, g.icd_10_code, i_10.icd_10_description, g.flags FROM icd_9_descriptions i_9 JOIN cm_gems g ON i_9.icd_9_code = g.icd_9_code JOIN icd_10_cm_descriptions i_10 ON g.icd_10_code = i_10.icd_10_code where g.icd_9_code = upper('";
+	char *query = new char[strlen(first_half)+strlen(cstr)+3];
 	memset(query, 0, strlen(first_half)+strlen(cstr)+2);	
 	strncpy(query,first_half,strlen(first_half));
 	strcat(query,cstr);
-	strcat(query,"'");
+	strcat(query,"')");
 	return query;
-
-/*	std::string query = first_half;
-	query.append(cstr);
-	query.append("'");
-	return (char*)query.c_str();*/
 }
 
-result handleQuery(char* cstr) {
-	connection *c = connectToDatabase();
-	char* query = constructQuery(cstr);		
-	if(DEBUG)	
-		std::cout << "query=" << query << std::endl;
-	result r;
-	if(DEBUG)
-		r = testQuery(c,query);
-	disconnect(c);	
-	return r;	
+/**
+* Gets a query to search 9 descriptions
+* \param cstr The char* to search for
+* \return A query to search 9 descriptions
+*/
+char* get9DescQuery(char* cstr) {
+	char *first_half = (char*)"select g.icd_9_code, i_9.icd_9_description, g.icd_10_code, i_10.icd_10_description, g.flags FROM icd_9_descriptions i_9 JOIN cm_gems g ON i_9.icd_9_code = g.icd_9_code JOIN icd_10_cm_descriptions i_10 ON g.icd_10_code = i_10.icd_10_code where upper(i_9.icd_9_description) LIKE upper('%";
+	char *query = new char[strlen(first_half)+strlen(cstr)+4];
+	memset(query, 0, strlen(first_half)+strlen(cstr)+3);	
+	strncpy(query,first_half,strlen(first_half));
+	strcat(query,cstr);
+	strcat(query,"%')");
+	return query;
 }
 
-std::vector<BaseCode*> process9To10Results(result r) {
-	std::vector<BaseCode*> v;	
+/**
+* Gets a query to search 10 codes
+* \param cstr The char* to search for
+* \return A query to search 10 codes
+*/
+char* get10CodeQuery(char* cstr) {
+	char *first_half = (char*)"select g.icd_9_code, i_9.icd_9_description, g.icd_10_code, i_10.icd_10_description, g.flags FROM icd_9_descriptions i_9 JOIN cm_gems g ON i_9.icd_9_code = g.icd_9_code JOIN icd_10_cm_descriptions i_10 ON g.icd_10_code = i_10.icd_10_code where i_10.icd_10_code = upper('";
+	char *query = new char[strlen(first_half)+strlen(cstr)+3];
+	memset(query, 0, strlen(first_half)+strlen(cstr)+2);	
+	strncpy(query,first_half,strlen(first_half));
+	strcat(query,cstr);
+	strcat(query,"')");
+	return query;
+}
+
+/**
+* Gets a query to search 10 decriptions
+* \param cstr The char* to search for
+* \return A query to search 10 descriptions
+*/
+char* get10DescQuery(char* cstr) {
+	char *first_half = (char*)"select g.icd_9_code, i_9.icd_9_description, g.icd_10_code, i_10.icd_10_description, g.flags FROM icd_9_descriptions i_9 JOIN cm_gems g ON i_9.icd_9_code = g.icd_9_code JOIN icd_10_cm_descriptions i_10 ON g.icd_10_code = i_10.icd_10_code where upper(i_10.icd_10_description) LIKE upper('%";
+	char *query = new char[strlen(first_half)+strlen(cstr)+4];
+	memset(query, 0, strlen(first_half)+strlen(cstr)+3);	
+	strncpy(query,first_half,strlen(first_half));
+	strcat(query,cstr);
+	strcat(query,"%')");
+	return query;
+}
+
+/**
+* Processes results into a supplied vector
+* \param r The results to process
+* \param v the vector to put the results in
+* \return A vector of Basecodes
+*/
+std::vector<BaseCode*> processResults(result r,std::vector<BaseCode*> v) {
 	for(result::const_iterator row=r.begin();row!=r.end();++row) {
 		ICD10* code = new ICD10((char*)row[2].c_str(),(int)strlen(row[2].c_str()),(char*)row[3].c_str(),strlen(row[3].c_str()),(char*)row[4].c_str(),strlen(row[4].c_str()));
 		v.push_back(code);
 	}
 	return v;
 }
+
+/**
+* Processes results into a new vector
+* \param r The results to process
+* \return A new vector of Basecodes
+*/
+std::vector<BaseCode*> processResults(result r) {
+	std::vector<BaseCode*> v;
+	v=processResults(r,v);
+	return v;
+}
+
+
+/** 
+* Runs the queries
+* \cstr The char* to be searched
+* \result The result
+*/
+std::vector<BaseCode*> handleQuery(char* cstr) {
+	connection *c = connectToDatabase();
+	char* nineCodeQuery = get9CodeQuery(cstr);		
+	char* nineDescQuery = get9DescQuery(cstr);		
+	char* tenCodeQuery = get10CodeQuery(cstr);		
+	char* tenDescQuery = get10DescQuery(cstr);		
+	if(DEBUG) {
+		std::cout << "nineCodeQuery=" << nineCodeQuery << std::endl;
+		std::cout << "nineDescQuery=" << nineDescQuery << std::endl;
+		std::cout << "tenCodeQuery=" << tenCodeQuery << std::endl;
+		std::cout << "tenDescQuery=" << tenDescQuery << std::endl;
+	}	
+	result r = runQuery(c,nineCodeQuery);
+	if(DEBUG)
+		printResults(r);
+	std::vector<BaseCode*> v = processResults(r);	
+
+	r = runQuery(c,nineDescQuery);
+	if(DEBUG)
+		printResults(r);
+	v = processResults(r,v);	
+
+	r = runQuery(c,tenCodeQuery);
+	if(DEBUG)
+		printResults(r);
+	v = processResults(r,v);	
+	
+	r = runQuery(c,tenDescQuery);
+	if(DEBUG)
+		printResults(r);
+	v = processResults(r,v);	
+
+	disconnect(c);	
+	return v;	
+
+}
+
 
 void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 {
@@ -127,12 +246,12 @@ void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
 	cstr[packet->getArgLen()] = '\0';
 	
 	//Handle Query
-	result r=handleQuery(cstr);	
+//	result r=handleQuery(cstr);	
 	//Process Results
-	std::vector<BaseCode*> v = process9To10Results(r);
+	//std::vector<BaseCode*> v = processResults(r);
 	
-	if(DEBUG)
-		printResults(r);
+	std::vector<BaseCode*> v=handleQuery(cstr);	
+	
 
 	void* codeBuffer = codeListToBuffer(v);
 	int bufferSize = 0;
