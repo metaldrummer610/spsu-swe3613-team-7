@@ -4,6 +4,10 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Select_Browser.H>
+#include <FL/fl_draw.H>
+#include <FL/Fl_Table_Row.H>
+#include <stdio.h>
+#include <string.h>
 
 #define HAVE_PTHREAD_H 1
 #include "threads.h" // FLTK Threads Support
@@ -19,9 +23,134 @@ ENetHost* client;
 ENetPeer* peer;
 ENetAddress address;
 ENetEvent event;
+std::string Header[3];
+
+std::vector<std::vector<std::string> > data; //just a place holder to be changed later
+
+class ICDTable : public Fl_Table_Row
+{
+protected:
+    void draw_cell(TableContext context,  		// table cell drawing
+    		   int R=0, int C=0, int X=0, int Y=0, int W=0, int H=0);
+//    void callback(TableContext context, 		// callback for table events
+//    		   int R, int C);
+public:
+    ICDTable(int x, int y, int w, int h, const char *l=0) : Fl_Table_Row(x,y,w,h,l)
+	{
+		end(); 
+	}
+    ~ICDTable() { }
+
+	void set_data(int r, int c, std::string l)
+	{
+		std::string str(l);
+		//data[r][c] = str;
+	}
+};
+
+// Handle drawing all cells in table
+void ICDTable::draw_cell(TableContext context, int R, int C, int X, int Y, int W, int H)
+{
+    static char s[40];
+    sprintf(s, "%d/%d", R, C);
+
+    switch ( context )
+    {
+	case CONTEXT_STARTPAGE:
+	    fl_font(FL_HELVETICA, 16);
+	    return;
+
+	case CONTEXT_ROW_HEADER:
+	{
+	    sprintf(s, "%d", R);
+	    fl_push_clip(X, Y, W, H);
+	    {
+		fl_draw_box(FL_THIN_UP_BOX, X, Y, W, H, color());
+		fl_color(FL_BLACK);
+		fl_draw(s, X, Y, W, H, FL_ALIGN_CENTER);
+	    }
+	    fl_pop_clip();
+	    return;
+	}	
+	case CONTEXT_COL_HEADER:
+	    sprintf(s, "%s", Header[C].c_str());
+	    fl_push_clip(X, Y, W, H);
+	    {
+		fl_draw_box(FL_THIN_UP_BOX, X, Y, W, H, color());
+		fl_color(FL_BLACK);
+		fl_draw(s, X, Y, W, H, FL_ALIGN_LEFT);
+	    }
+	    fl_pop_clip();
+	    return;
+
+	case CONTEXT_CELL:
+	{
+		if(data.size() > 0)
+		{
+	  		 sprintf(s, "%s", data.at(R).at(C).c_str());
+			 //sprintf(s, "%s", "no data");
+	  		 fl_push_clip(X, Y, W, H);
+	   		 {
+	       		 	// BG COLOR
+				fl_color( row_selected(R) ? selection_color() : FL_WHITE);
+				fl_rectf(X, Y, W, H);
+
+				// TEXT
+				fl_color(FL_BLACK);
+				fl_draw(s, X, Y, W, H, FL_ALIGN_LEFT);
+
+				// BORDER
+				fl_color(FL_LIGHT2); 
+				fl_rect(X, Y, W, H);
+	    		}
+	    		fl_pop_clip();
+	    		return;
+		 }
+
+		 else
+		 {
+	  		 sprintf(s, "%s", "No Data");
+	  		 fl_push_clip(X, Y, W, H);
+	   		 {
+	       		 	// BG COLOR
+				fl_color( row_selected(R) ? selection_color() : FL_WHITE);
+				fl_rectf(X, Y, W, H);
+
+				// TEXT
+				fl_color(FL_BLACK);
+				fl_draw(s, X, Y, W, H, FL_ALIGN_LEFT);
+
+				// BORDER
+				fl_color(FL_LIGHT2); 
+				fl_rect(X, Y, W, H);
+	    		}
+	    		fl_pop_clip();
+	    		return;
+		 }
+	}
+
+	default:
+	    return;
+    }
+}
+
+void table_cb(Fl_Widget* o, void* cdata)
+{
+    Fl_Table *table = (Fl_Table*)cdata;
+    fprintf(stderr, "%s callback: row=%d col=%d, context=%d, event=%d clicks=%d\n",
+	(const char*)table->label(),
+	(int)table->callback_row(),
+	(int)table->callback_col(),
+	(int)table->callback_context(),
+	(int)Fl::event(),
+	(int)Fl::event_clicks());
+}
+
+ICDTable* ICBMTable; //Just creating the table here for the purpose of being able to access it outside of main
 
 void submitButtonClick(Fl_Widget* widget, void* ptr)
 {
+	data.clear();
 	std::cout << "Click!" << std::endl;
 	Fl_Input* codeInputBox = (Fl_Input*)ptr;
 	std::cout << "Input: " << codeInputBox->value() << std::endl;
@@ -110,12 +239,21 @@ void handleConvert9To10Response(ICDResponsePacket* packet)
 	std::vector<BaseCode*> codes = bufferToCodeList(packet->getData());
 
 	Fl::lock();
-	codeList->clear();
 	for(std::vector<BaseCode*>::iterator it = codes.begin(); it != codes.end(); it++)
 	{
 		std::cout << "Got a code!: " << (*it) << std::endl;
-		codeList->add((*it)->getCode());
+		// TODO: Add codes to ICBM Table
+		//	ICBMTable->set_data(1, 1, (*it)->getCode()); 
+		//	codeList->add((*it)->getCode());
+		std::vector<std::string> columns;
+		columns.push_back((*it)->getCode());
+		columns.push_back((*it)->getDesc());
+		columns.push_back((*it)->getFlags());
+
+		data.push_back(columns);
 	}
+	ICBMTable->rows(codes.size());
+	ICBMTable->redraw();
 	Fl::unlock();
 	Fl::awake(packet);
 
@@ -180,21 +318,41 @@ void* enetMain(void* p)
 	return 0;
 }
 
+
+
 int main(int argc, char** argv)
 {
-	// Start up the network connection...
+	// Start up the netwOrk connection...
 	std::cout << "About to init enet" << std::endl;
 	initEnet();
 	atexit(destroyEnet);
 
-	Fl_Window* window = new Fl_Window(340, 180, "ICD Conversion Application");
+	Fl_Window* window = new Fl_Window(500, 400, "ICD Conversion Application");
 	Fl_Input* codeInputBox = new Fl_Input(15, 15, 300, 20);
 
-	Fl_Button* submitButton = new Fl_Button(240, 40, 75, 20, "Submit");
+	Fl_Button* submitButton = new Fl_Button(350, 15, 75, 20, "Submit");
 	submitButton->callback(&submitButtonClick, codeInputBox);
 
-	codeList = new Fl_Select_Browser(15, 60, 300, 100);
-	codeList->callback(&rowClickedCallback);
+ 	Header[0] = "ICD Code";
+
+	// Creating all the table stuff	
+	ICBMTable = new ICDTable(15, 60, 420, 300, "ICBM Table");
+	ICBMTable->selection_color(FL_YELLOW);
+	ICBMTable->when(FL_WHEN_RELEASE);
+	ICBMTable->col_header(1);		// enable col headers
+	ICBMTable->col_resize(1);		// enable col resizing
+	ICBMTable->cols(3);
+   ICBMTable->col_width_all(125);   	// setting width of all cols
+	ICBMTable->row_header(1);		// enable row headers
+   ICBMTable->row_resize(1); 		// enable row resizing
+	ICBMTable->rows(10);	
+   ICBMTable->callback(table_cb, (void*)ICBMTable);
+   ICBMTable->when(FL_WHEN_CHANGED|FL_WHEN_RELEASE);
+   ICBMTable->end();
+	// end table making
+
+	//codeList = new Fl_Select_Browser(15, 60, 300, 100);
+	//codeList->callback(&rowClickedCallback);
 	window->end();
 	window->show(argc, argv);
 
