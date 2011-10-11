@@ -19,4 +19,9 @@ CREATE TABLE cm_gems (
 	PRIMARY KEY (icd_9_code, icd_10_code, flags)
 );
 
+CREATE TABLE dx_codes (
+	icd_10_code VARCHAR(10) REFERENCES icd_10_cm_descriptions,
+	dx_code VARCHAR(10) PRIMARY KEY
+);
+
 
