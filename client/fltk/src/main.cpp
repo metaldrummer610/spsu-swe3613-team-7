@@ -311,7 +311,7 @@ void handleConvert9To10Response(ICDResponsePacket* packet)
 
 		if((*it)->getType() == 1)
 		{
-			Header[0] = "ICD 9 Code";
+			Header[0] = "Searched";
 			Header[1] = "ICD 10 Code";
 		}
 
@@ -324,7 +324,7 @@ void handleConvert9To10Response(ICDResponsePacket* packet)
 	}
 	else if(codes.size() == 0)
 	{
-		Header[0] = "ICD Code";
+		Header[0] = "Searched";
 		ICBMTable->rows(1);
 		ICBMTable->redraw();
 	}
@@ -400,7 +400,7 @@ int main(int argc, char** argv)
 	initEnet();
 	atexit(destroyEnet);
 
-	Fl_Window* window = new Fl_Window(600, 500, "ICD Conversion Application");
+	Fl_Window* window = new Fl_Window(575, 500, "ICD Conversion Application");
 	Fl_Input* codeInputBox = new Fl_Input(15, 15, 435, 20);
 
 	Fl_Button* submitButton = new Fl_Button(485, 15, 75, 20, "Submit");
@@ -412,7 +412,7 @@ int main(int argc, char** argv)
 	choice = new Fl_Choice(200, 435, 150, 20, "Choose");
 
 	// Filling the column header information
- 	Header[0] = "ICD Code";
+ 	Header[0] = "Searched";
 	Header[1] = "ICD Code";
 	Header[2] = "Description";
 	Header[3] = "Flags";
