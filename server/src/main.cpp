@@ -21,7 +21,7 @@
 *	 flags CHAR(5),
 * 	 PRIMARY KEY (icd_9_code, icd_10_code, flags)
 * );	
-
+*
 */
 
 #include <enet/enet.h>
@@ -172,7 +172,7 @@ char* get10DescQuery(char* cstr) {
 */
 std::vector<BaseCode*> processResults(result r,std::vector<BaseCode*> v) {
 	for(result::const_iterator row=r.begin();row!=r.end();++row) {
-		ICD10* code = new ICD10((char*)row[2].c_str(),(int)strlen(row[2].c_str()),(char*)row[3].c_str(),strlen(row[3].c_str()),(char*)row[4].c_str(),strlen(row[4].c_str()));
+		BaseCode* code = new BaseCode(intToCode(0),(char*)row[2].c_str(),(int)strlen(row[2].c_str()),(char*)row[3].c_str(),(int)strlen(row[3].c_str()),(char*)row[4].c_str(),(int)strlen(row[4].c_str()));
 		v.push_back(code);
 	}
 	return v;
@@ -348,26 +348,7 @@ int main()
 		std::cout << "server is null.... that is bad" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	
-	// This code won't compile without modifying it... Don't feel like it :)
-/*	if(DEBUG) {	
-		char *cstr = (char*)"8962";	
-		//Handle Query
-		result r=handleQuery(cstr);	
-		//Process Results
-		std::vector<ICD10> v = process9To10Results(r);
 
-		void* codeBuffer = codeListToBuffer(v);
-		int bufferSize = 0;
-		memcpy(&bufferSize, codeBuffer, sizeof(int));
-
-		ICDResponsePacket* response = new ICDResponsePacket(ICD_RESPONSE_CONVERT_9_TO_10, codeBuffer, bufferSize);
-		delete response;
-		delete codeBuffer;
-//		sendPacket(response, peer);
-		printResults(r);
-	}	*/
-	
 	atexit(enet_deinitialize);
 
 	loop();
