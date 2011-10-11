@@ -6,6 +6,7 @@
 #include <FL/Fl_Select_Browser.H>
 #include <FL/fl_draw.H>
 #include <FL/Fl_Table_Row.H>
+#include <FL/Fl_Choice.H>
 #include <stdio.h>
 #include <string.h>
 
@@ -18,14 +19,19 @@
 
 Fl_Select_Browser* codeList;
 Fl_Thread enetThread;
+Fl_Choice* choice;
 bool enetThreadRunning = false;
 ENetHost* client;
 ENetPeer* peer;
 ENetAddress address;
 ENetEvent event;
-std::string Header[3];
+int currentSRow;
+std::string Header[4];
+std::string inputFBox;
 
-std::vector<std::vector<std::string> > data; //just a place holder to be changed later
+std::vector<std::vector<std::string> > data;
+std::vector<std::vector<std::string> > defaultV;
+std::vector<std::string> recent;
 
 class ICDTable : public Fl_Table_Row
 {
@@ -78,7 +84,7 @@ void ICDTable::draw_cell(TableContext context, int R, int C, int X, int Y, int W
 	    {
 		fl_draw_box(FL_THIN_UP_BOX, X, Y, W, H, color());
 		fl_color(FL_BLACK);
-		fl_draw(s, X, Y, W, H, FL_ALIGN_LEFT);
+		fl_draw(s, X, Y, W, H, FL_ALIGN_CENTER);
 	    }
 	    fl_pop_clip();
 	    return;
@@ -144,6 +150,28 @@ void table_cb(Fl_Widget* o, void* cdata)
 	(int)table->callback_context(),
 	(int)Fl::event(),
 	(int)Fl::event_clicks());
+	currentSRow = (int)(table->callback_row());
+}
+
+void testCallback(Fl_Widget* w, void* ptr)
+{
+	std::cout << choice->text() << std::endl;
+}
+
+void fixRecent()
+{
+	std::vector<std::string> tempV;
+	for(std::vector<std::string>::iterator it = recent.begin(); it != recent.end(); it++)
+	{
+		tempV.push_back((*it));
+	}
+
+	recent.clear();
+
+	for(int i = tempV.size()-1; i >= 0; i--)
+	{
+		recent.push_back(tempV.at(i));
+	}
 }
 
 ICDTable* ICBMTable; //Just creating the table here for the purpose of being able to access it outside of main
@@ -157,6 +185,20 @@ void submitButtonClick(Fl_Widget* widget, void* ptr)
 	std::cout << "len: " << codeInputBox->size() << std::endl;
 	std::cout << "sf: " << sizeof(char) << std::endl;
 
+	inputFBox = codeInputBox->value();
+
+	recent.push_back(inputFBox);
+
+	fixRecent();
+	int index = choice->find_index("&Recent");
+	if(index != -1) choice->clear_submenu(index);
+
+	for(std::vector<std::string>::iterator it = recent.begin(); it != recent.end(); it++)
+	{
+		std::string temp = "&Recent/"+(*it);
+		choice->add(temp.c_str(), 0, testCallback);
+	}
+
 	int len = codeInputBox->size();
 
 	void* str = new char[len];
@@ -168,6 +210,24 @@ void submitButtonClick(Fl_Widget* widget, void* ptr)
 	sendPacket(command, peer);
 
 	delete command;
+}
+
+void defaultButtonClick(Fl_Widget* widget)
+{
+	if(data.size() > 0)
+	{
+		defaultV.push_back(data.at(currentSRow));
+	
+		for(int i = 0; i < 4; i++)
+		{
+			std::cout << Header[i] << ": " << defaultV.at(0).at(i) << std::endl;
+		}
+	}
+	else
+	{
+		std::cout << "No data to make default" << std::endl;
+	}
+
 }
 
 void rowClickedCallback(Fl_Widget* widget)
@@ -199,7 +259,7 @@ void initEnet()
 	}
 
 	enet_address_set_host(&address, "localhost");
-	address.port = 9000;
+	address.port = 9000; //y u no over 9000?
 
 	peer = enet_host_connect(client, &address, 2, 0);
 
@@ -243,17 +303,31 @@ void handleConvert9To10Response(ICDResponsePacket* packet)
 	{
 		std::cout << "Got a code!: " << (*it) << std::endl;
 		// TODO: Add codes to ICBM Table
-		//	ICBMTable->set_data(1, 1, (*it)->getCode()); 
-		//	codeList->add((*it)->getCode());
 		std::vector<std::string> columns;
+		columns.push_back(inputFBox);
 		columns.push_back((*it)->getCode());
 		columns.push_back((*it)->getDesc());
 		columns.push_back((*it)->getFlags());
 
+		if((*it)->getType() == 1)
+		{
+			Header[0] = "ICD 9 Code";
+			Header[1] = "ICD 10 Code";
+		}
+
 		data.push_back(columns);
 	}
-	ICBMTable->rows(codes.size());
-	ICBMTable->redraw();
+	if(codes.size() > 0)
+	{
+		ICBMTable->rows(codes.size());
+		ICBMTable->redraw();
+	}
+	else if(codes.size() == 0)
+	{
+		Header[0] = "ICD Code";
+		ICBMTable->rows(1);
+		ICBMTable->redraw();
+	}
 	Fl::unlock();
 	Fl::awake(packet);
 
@@ -319,7 +393,6 @@ void* enetMain(void* p)
 }
 
 
-
 int main(int argc, char** argv)
 {
 	// Start up the netwOrk connection...
@@ -327,21 +400,30 @@ int main(int argc, char** argv)
 	initEnet();
 	atexit(destroyEnet);
 
-	Fl_Window* window = new Fl_Window(500, 400, "ICD Conversion Application");
-	Fl_Input* codeInputBox = new Fl_Input(15, 15, 300, 20);
+	Fl_Window* window = new Fl_Window(600, 500, "ICD Conversion Application");
+	Fl_Input* codeInputBox = new Fl_Input(15, 15, 435, 20);
 
-	Fl_Button* submitButton = new Fl_Button(350, 15, 75, 20, "Submit");
+	Fl_Button* submitButton = new Fl_Button(485, 15, 75, 20, "Submit");
 	submitButton->callback(&submitButtonClick, codeInputBox);
 
+	Fl_Button *defaultButton = new Fl_Button(15, 435, 150, 20, "Make default code");
+	defaultButton->callback(&defaultButtonClick);
+
+	choice = new Fl_Choice(200, 435, 150, 20, "Choose");
+
+	// Filling the column header information
  	Header[0] = "ICD Code";
+	Header[1] = "ICD Code";
+	Header[2] = "Description";
+	Header[3] = "Flags";
 
 	// Creating all the table stuff	
-	ICBMTable = new ICDTable(15, 60, 420, 300, "ICBM Table");
+	ICBMTable = new ICDTable(15, 60, 545, 350, "ICBM Table");
 	ICBMTable->selection_color(FL_YELLOW);
 	ICBMTable->when(FL_WHEN_RELEASE);
 	ICBMTable->col_header(1);		// enable col headers
 	ICBMTable->col_resize(1);		// enable col resizing
-	ICBMTable->cols(3);
+	ICBMTable->cols(4);
    ICBMTable->col_width_all(125);   	// setting width of all cols
 	ICBMTable->row_header(1);		// enable row headers
    ICBMTable->row_resize(1); 		// enable row resizing
@@ -355,6 +437,11 @@ int main(int argc, char** argv)
 	//codeList->callback(&rowClickedCallback);
 	window->end();
 	window->show(argc, argv);
+
+	/*Fl_Window* testWindow = new Fl_Window(100, 100, "Just some bullshit test");
+	testWindow -> end();
+	testWindow -> show(argc, argv);
+	*/
 
 	Fl::lock();
 
