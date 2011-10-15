@@ -7,6 +7,7 @@
 #include <FL/fl_draw.H>
 #include <FL/Fl_Table_Row.H>
 #include <FL/Fl_Choice.H>
+#include <FL/Fl_Menu_Bar.H>
 #include <stdio.h>
 #include <string.h>
 
@@ -19,7 +20,7 @@
 
 Fl_Select_Browser* codeList;
 Fl_Thread enetThread;
-Fl_Choice* choice;
+Fl_Menu_Bar* menu;
 bool enetThreadRunning = false;
 ENetHost* client;
 ENetPeer* peer;
@@ -155,7 +156,7 @@ void table_cb(Fl_Widget* o, void* cdata)
 
 void testCallback(Fl_Widget* w, void* ptr)
 {
-	std::cout << choice->text() << std::endl;
+	std::cout << menu->text() << std::endl;
 }
 
 void fixRecent()
@@ -190,13 +191,13 @@ void submitButtonClick(Fl_Widget* widget, void* ptr)
 	recent.push_back(inputFBox);
 
 	fixRecent();
-	int index = choice->find_index("&Recent");
-	if(index != -1) choice->clear_submenu(index);
+	int index = menu->find_index("Recent");
+	if(index != -1) menu->clear_submenu(index);
 
 	for(std::vector<std::string>::iterator it = recent.begin(); it != recent.end(); it++)
 	{
-		std::string temp = "&Recent/"+(*it);
-		choice->add(temp.c_str(), 0, testCallback);
+		std::string temp = "Recent/"+(*it);
+		menu->add(temp.c_str(), 0, testCallback);
 	}
 
 	int len = codeInputBox->size();
@@ -392,6 +393,18 @@ void* enetMain(void* p)
 	return 0;
 }
 
+void exitCallback(Fl_Widget* w, void* ptr)
+{
+	exit(EXIT_SUCCESS);
+}
+
+void helpCallback(Fl_Widget* w, void* ptr)
+{
+	Fl_Window* helpWindow = new Fl_Window(100, 100, "Help");
+	helpWindow->end();
+	helpWindow->show();
+}
+
 
 int main(int argc, char** argv)
 {
@@ -401,15 +414,19 @@ int main(int argc, char** argv)
 	atexit(destroyEnet);
 
 	Fl_Window* window = new Fl_Window(575, 500, "ICD Conversion Application");
-	Fl_Input* codeInputBox = new Fl_Input(15, 15, 435, 20);
+	Fl_Input* codeInputBox = new Fl_Input(15, 30, 435, 20);
 
-	Fl_Button* submitButton = new Fl_Button(485, 15, 75, 20, "Submit");
+	Fl_Button* submitButton = new Fl_Button(485, 30, 75, 20, "Submit");
 	submitButton->callback(&submitButtonClick, codeInputBox);
 
-	Fl_Button *defaultButton = new Fl_Button(15, 435, 150, 20, "Make default code");
-	defaultButton->callback(&defaultButtonClick);
+	//Fl_Button *defaultButton = new Fl_Button(15, 435, 150, 20, "Make default code");
+	//defaultButton->callback(&defaultButtonClick);
 
-	choice = new Fl_Choice(200, 435, 150, 20, "Choose");
+	menu = new Fl_Menu_Bar(0, 0, 575, 20, " ");
+	menu->add("File/Exit", "esc", exitCallback);
+	menu->add("Recent/...", 0, testCallback);
+	menu->add("Help/Get Help", 0, helpCallback);
+	menu->add("Help/About", 0, testCallback);
 
 	// Filling the column header information
  	Header[0] = "Searched";
@@ -418,7 +435,7 @@ int main(int argc, char** argv)
 	Header[3] = "Flags";
 
 	// Creating all the table stuff	
-	ICBMTable = new ICDTable(15, 60, 545, 350, "ICBM Table");
+	ICBMTable = new ICDTable(15, 75, 545, 350, "ICBM Table");
 	ICBMTable->selection_color(FL_YELLOW);
 	ICBMTable->when(FL_WHEN_RELEASE);
 	ICBMTable->col_header(1);		// enable col headers
@@ -433,16 +450,9 @@ int main(int argc, char** argv)
    ICBMTable->end();
 	// end table making
 
-	//codeList = new Fl_Select_Browser(15, 60, 300, 100);
-	//codeList->callback(&rowClickedCallback);
 	window->end();
 	window->show(argc, argv);
-
-	/*Fl_Window* testWindow = new Fl_Window(100, 100, "Just some bullshit test");
-	testWindow -> end();
-	testWindow -> show(argc, argv);
-	*/
-
+	
 	Fl::lock();
 
 	fl_create_thread(enetThread, enetMain, NULL);

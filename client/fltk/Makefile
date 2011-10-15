@@ -6,8 +6,8 @@ EXENAME=client
 #LDFLAGS=/usr/local/lib/libenet.a -lICDNetwork -L../../common/bin/ -lfltk -framework Cocoa -lpthread
 
 CFLAGS=-Wall -Iinclude/ -I../../common/include/ -o $(EXENAME) -g
-LDFLAGS=/usr/local/lib/libenet.a -lICDNetwork -L../../common/bin/ -L/usr/local/lib -lfltk -lpthread -ldl -lm -lX11
-SRC=src/main.cpp
+LDFLAGS=/usr/local/lib/libenet.a -lICDNetwork -L../../common/bin/ -L/usr/local/lib -lfltk -lpthread -ldl -lm -lX11 -lXext -lXft -lfontconfig 
+SRC=src/main.cpp src/help.cpp
 
 all : $(SRC)
 	$(CC) $(CFLAGS) $(SRC) $(LDFLAGS)
