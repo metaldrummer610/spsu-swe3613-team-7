@@ -8,6 +8,7 @@
 #include <FL/Fl_Table_Row.H>
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Tree.H>
 #include <stdio.h>
 #include <string.h>
 
@@ -398,13 +399,62 @@ void exitCallback(Fl_Widget* w, void* ptr)
 	exit(EXIT_SUCCESS);
 }
 
+void helpTreeCallback(Fl_Widget* w, void* data)
+{
+	Fl_Tree* tree = (Fl_Tree*)w;
+	Fl_Tree_Item* item = (Fl_Tree_Item*)tree->callback_item();
+
+	if(! item) return;
+	switch(tree->callback_reason())
+	{
+		case FL_TREE_REASON_SELECTED:
+		//	if(std::strcmp(tree->label(), "test1"))
+		//		std::cout << tree->label() << std::endl;
+			break;
+		case FL_TREE_REASON_DESELECTED:
+			break;
+		case FL_TREE_REASON_OPENED:
+			break;
+		case FL_TREE_REASON_CLOSED:
+			break;
+		case FL_TREE_REASON_NONE:
+			break;
+	}
+
+}
+
 void helpCallback(Fl_Widget* w, void* ptr)
 {
-	Fl_Window* helpWindow = new Fl_Window(100, 100, "Help");
+	Fl_Window* helpWindow = new Fl_Window(300, 300, "Help");
+
+	Fl_Tree* helpTree = new Fl_Tree(15, 15, 200, 200, "");
+	helpTree->showroot(0);
+	helpTree->callback(helpTreeCallback);
+
+	helpTree->add("Test/test1");
+	helpTree->add("Test/test2");
+
+	helpTree->close("Test");
+
+
 	helpWindow->end();
 	helpWindow->show();
 }
 
+void aboutCallback(Fl_Widget* w, void* ptr)
+{
+	Fl_Window* aboutWindow = new Fl_Window(250, 250, "About");
+	aboutWindow->begin();
+	{
+		Fl_Box* aboutBox = new Fl_Box(15, 15, aboutWindow->w()-30, aboutWindow->h()-30, " ");
+		aboutBox->box(FL_UP_BOX);
+		aboutBox->label("ICD code conversion program \n Class: SWE3613 Software System Engineering \n Group 7 \n David Butcher, Kevin DeBrito, Robbie Diaz, Gregory Goncharov, and Jeff Lett");
+		aboutBox->align(FL_ALIGN_WRAP|FL_ALIGN_CENTER);
+	}
+	aboutWindow->resizable(aboutWindow);
+	aboutWindow->end();
+	aboutWindow->show();
+}
 
 int main(int argc, char** argv)
 {
@@ -424,9 +474,9 @@ int main(int argc, char** argv)
 
 	menu = new Fl_Menu_Bar(0, 0, 575, 20, " ");
 	menu->add("File/Exit", "esc", exitCallback);
-	menu->add("Recent/...", 0, testCallback);
-	menu->add("Help/Get Help", 0, helpCallback);
-	menu->add("Help/About", 0, testCallback);
+	menu->add("Recent/", 0, testCallback);
+	menu->add("Help/Get Help", "^h", helpCallback);
+	menu->add("Help/About", 0, aboutCallback);
 
 	// Filling the column header information
  	Header[0] = "Searched";
