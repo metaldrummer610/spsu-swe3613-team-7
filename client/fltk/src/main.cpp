@@ -9,6 +9,7 @@
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Tree.H>
+#include <FL/Fl_Multiline_Output.H>
 #include <stdio.h>
 #include <string.h>
 
@@ -22,6 +23,7 @@
 Fl_Select_Browser* codeList;
 Fl_Thread enetThread;
 Fl_Menu_Bar* menu;
+Fl_Input* codeInputBox;
 bool enetThreadRunning = false;
 ENetHost* client;
 ENetPeer* peer;
@@ -96,7 +98,6 @@ void ICDTable::draw_cell(TableContext context, int R, int C, int X, int Y, int W
 		if(data.size() > 0)
 		{
 	  		 sprintf(s, "%s", data.at(R).at(C).c_str());
-			 //sprintf(s, "%s", "no data");
 	  		 fl_push_clip(X, Y, W, H);
 	   		 {
 	       		 	// BG COLOR
@@ -157,11 +158,32 @@ void table_cb(Fl_Widget* o, void* cdata)
 
 void testCallback(Fl_Widget* w, void* ptr)
 {
+	// It's but a simple test callback
 	std::cout << menu->text() << std::endl;
+}
+
+void recentCallback(Fl_Widget* w, void* ptr)
+{
+	data.clear();
+	codeInputBox->value(menu->text());
+	inputFBox = codeInputBox->value();
+
+	int len = codeInputBox->size();
+
+	void* str = new char[len];
+	memset(str, 0, len);
+	memcpy(str, codeInputBox->value(), len);
+
+	ICDCommandPacket* command = new ICDCommandPacket(ICD_COMMAND_CONVERT_9_TO_10, str, len);
+	sendPacket(command, peer);
+
+	delete command;
 }
 
 void fixRecent()
 {
+	// All this thing does it switch around the values in the recent vector which basically holds
+	// the most recent codes. Yes it's oddly pointless but I don't really care.
 	std::vector<std::string> tempV;
 	for(std::vector<std::string>::iterator it = recent.begin(); it != recent.end(); it++)
 	{
@@ -182,11 +204,14 @@ void submitButtonClick(Fl_Widget* widget, void* ptr)
 {
 	data.clear();
 	std::cout << "Click!" << std::endl;
-	Fl_Input* codeInputBox = (Fl_Input*)ptr;
+	codeInputBox = (Fl_Input*)ptr;
 	std::cout << "Input: " << codeInputBox->value() << std::endl;
 	std::cout << "len: " << codeInputBox->size() << std::endl;
 	std::cout << "sf: " << sizeof(char) << std::endl;
 
+// Simply ignore everything till the next comment, all this stuff does is add the recent vector to the menu
+// so that it can be accessed properly. At this point it still needs to have a proper callback function
+// but I haven't gotten to that just yet, so for now it just prints whatever has been clicked.
 	inputFBox = codeInputBox->value();
 
 	recent.push_back(inputFBox);
@@ -198,8 +223,10 @@ void submitButtonClick(Fl_Widget* widget, void* ptr)
 	for(std::vector<std::string>::iterator it = recent.begin(); it != recent.end(); it++)
 	{
 		std::string temp = "Recent/"+(*it);
-		menu->add(temp.c_str(), 0, testCallback);
+		menu->add(temp.c_str(), 0, recentCallback);
 	}
+
+// End recent menu stuffs
 
 	int len = codeInputBox->size();
 
@@ -214,6 +241,7 @@ void submitButtonClick(Fl_Widget* widget, void* ptr)
 	delete command;
 }
 
+// Not actually sure if this stuff is still relevant, but I'll keep it here just to be safe
 void defaultButtonClick(Fl_Widget* widget)
 {
 	if(data.size() > 0)
@@ -303,22 +331,26 @@ void handleConvert9To10Response(ICDResponsePacket* packet)
 	Fl::lock();
 	for(std::vector<BaseCode*>::iterator it = codes.begin(); it != codes.end(); it++)
 	{
-		std::cout << "Got a code!: " << (*it) << std::endl;
+	//	std::cout << "Got a code!: " << (*it) << std::endl;
 		// TODO: Add codes to ICBM Table
+		// Hey, guess what TODO, we fixed it you can haz your leave now
+		std::cout << "check";
 		std::vector<std::string> columns;
 		columns.push_back(inputFBox);
 		columns.push_back((*it)->getCode());
 		columns.push_back((*it)->getDesc());
 		columns.push_back((*it)->getFlags());
-
+		
 		if((*it)->getType() == 1)
 		{
 			Header[0] = "Searched";
 			Header[1] = "ICD 10 Code";
 		}
-
+		std::cout << "My mic sounds nice check 1" << std::endl;
 		data.push_back(columns);
+		columns.clear();
 	}
+	std::cout << "My mic sounds nice check 2" << std::endl;
 	if(codes.size() > 0)
 	{
 		ICBMTable->rows(codes.size());
@@ -330,9 +362,17 @@ void handleConvert9To10Response(ICDResponsePacket* packet)
 		ICBMTable->rows(1);
 		ICBMTable->redraw();
 	}
+	std::cout << "My mic sounds nice check 3" << std::endl;
 	Fl::unlock();
-	Fl::awake(packet);
-
+	std::cout << "My mic sounds nice check 4" << std::endl;
+	try
+	{
+		Fl::awake(packet); // We have a problem here and I'm not quite sure why... long story short "y u no work?"
+	}
+	catch(int e)
+	{
+		std::cout << "Houston, we have a problem with an ICBM. Problem num: " << e << std::endl;
+	}
 	for(std::vector<BaseCode*>::iterator it = codes.begin(); it != codes.end(); it++)
 	{
 		delete (*it);
@@ -396,11 +436,21 @@ void* enetMain(void* p)
 
 void exitCallback(Fl_Widget* w, void* ptr)
 {
+	// Just an exit callback, nothing to be concerned about
 	exit(EXIT_SUCCESS);
 }
 
+Fl_Multiline_Output* helpOut;
+
 void helpTreeCallback(Fl_Widget* w, void* data)
 {
+	// I thought I told you the last one was nothing to be concerned about.... Fine, moving on:
+	// This function is the for the help menu, its a basic tree that will eventually contain all
+	// the information on how this program will work. So pretty much it'll just say "Oh fuck!"
+	// Not really. The switch statement below and corresponding tree/item creates allow
+	// for the fucntion to properly show which item has been selected so that it can show
+	// the right thing inside the other box which I'll eventually put in
+	// TODO: Create another box to put all this whacky information into
 	Fl_Tree* tree = (Fl_Tree*)w;
 	Fl_Tree_Item* item = (Fl_Tree_Item*)tree->callback_item();
 
@@ -408,8 +458,28 @@ void helpTreeCallback(Fl_Widget* w, void* data)
 	switch(tree->callback_reason())
 	{
 		case FL_TREE_REASON_SELECTED:
-		//	if(std::strcmp(tree->label(), "test1"))
-		//		std::cout << tree->label() << std::endl;
+		char path[256];
+		tree->item_pathname(path, sizeof(path), item);
+
+			if(strncmp(path, "1x", 1) == 0)
+			{
+				if(strncmp(item->label(), "1x", 1) == 0)
+				{
+					std::cout << item->label() << std::endl;
+					helpOut->value(item->label());
+				}
+				else if(strncmp(item->label(), "2x", 1) == 0)
+				{
+					helpOut->value(item->label());
+				}
+			}
+			else if(strncmp(path, "2x", 1) == 0)
+			{
+				if(strncmp(item->label(), "1x", 1) == 0)
+				{
+					helpOut->value(item->label());
+				}
+			}
 			break;
 		case FL_TREE_REASON_DESELECTED:
 			break;
@@ -423,19 +493,27 @@ void helpTreeCallback(Fl_Widget* w, void* data)
 
 }
 
+
 void helpCallback(Fl_Widget* w, void* ptr)
 {
-	Fl_Window* helpWindow = new Fl_Window(300, 300, "Help");
+	// Incase you were wondering why we have two help callback things,
+	// this one actually creates the window, the tree, and the soon to exist box.
+	Fl_Window* helpWindow = new Fl_Window(600, 265, "Help");
 
-	Fl_Tree* helpTree = new Fl_Tree(15, 15, 200, 200, "");
+	Fl_Tree* helpTree = new Fl_Tree(15, 15, 250, 235, "");
+
+	helpOut = new Fl_Multiline_Output(280, 15, 600-250-45, 235, "");
+	helpOut->align(FL_ALIGN_WRAP);
+
 	helpTree->showroot(0);
 	helpTree->callback(helpTreeCallback);
 
-	helpTree->add("Test/test1");
-	helpTree->add("Test/test2");
+	helpTree->add("1. ICD Conversion/1. Submitting a code");
+	helpTree->add("1. ICD Conversion/2. How to read the table");
+	helpTree->add("2. Recent/1. How to use the recent menu");
 
-	helpTree->close("Test");
-
+	helpTree->close("ICD Conversion");
+	helpTree->close("Recent");
 
 	helpWindow->end();
 	helpWindow->show();
@@ -443,6 +521,7 @@ void helpCallback(Fl_Widget* w, void* ptr)
 
 void aboutCallback(Fl_Widget* w, void* ptr)
 {
+	// This function is all about making the help about window, which is completely useless for all intents and purposes
 	Fl_Window* aboutWindow = new Fl_Window(250, 250, "About");
 	aboutWindow->begin();
 	{
@@ -451,7 +530,7 @@ void aboutCallback(Fl_Widget* w, void* ptr)
 		aboutBox->label("ICD code conversion program \n Class: SWE3613 Software System Engineering \n Group 7 \n David Butcher, Kevin DeBrito, Robbie Diaz, Gregory Goncharov, and Jeff Lett");
 		aboutBox->align(FL_ALIGN_WRAP|FL_ALIGN_CENTER);
 	}
-	aboutWindow->resizable(aboutWindow);
+	aboutWindow->resizable(aboutWindow); // Yeah, I can haz resize
 	aboutWindow->end();
 	aboutWindow->show();
 }
@@ -464,7 +543,7 @@ int main(int argc, char** argv)
 	atexit(destroyEnet);
 
 	Fl_Window* window = new Fl_Window(575, 500, "ICD Conversion Application");
-	Fl_Input* codeInputBox = new Fl_Input(15, 30, 435, 20);
+   codeInputBox = new Fl_Input(15, 30, 435, 20);
 
 	Fl_Button* submitButton = new Fl_Button(485, 30, 75, 20, "Submit");
 	submitButton->callback(&submitButtonClick, codeInputBox);
@@ -472,10 +551,11 @@ int main(int argc, char** argv)
 	//Fl_Button *defaultButton = new Fl_Button(15, 435, 150, 20, "Make default code");
 	//defaultButton->callback(&defaultButtonClick);
 
+	// Who knew that creating a menu could be so boring......
 	menu = new Fl_Menu_Bar(0, 0, 575, 20, " ");
 	menu->add("File/Exit", "esc", exitCallback);
 	menu->add("Recent/", 0, testCallback);
-	menu->add("Help/Get Help", "^h", helpCallback);
+	menu->add("Help/Get Help", "h", helpCallback);
 	menu->add("Help/About", 0, aboutCallback);
 
 	// Filling the column header information
@@ -485,7 +565,7 @@ int main(int argc, char** argv)
 	Header[3] = "Flags";
 
 	// Creating all the table stuff	
-	ICBMTable = new ICDTable(15, 75, 545, 350, "ICBM Table");
+	ICBMTable = new ICDTable(15, 75, window->w() - 30, 350, "ICBM Table");
 	ICBMTable->selection_color(FL_YELLOW);
 	ICBMTable->when(FL_WHEN_RELEASE);
 	ICBMTable->col_header(1);		// enable col headers
@@ -508,3 +588,7 @@ int main(int argc, char** argv)
 	fl_create_thread(enetThread, enetMain, NULL);
 	return Fl::run();
 }
+
+/* How nice of you to continue reading past all the other nonsense and read this comment. Honestly though, this comment has absolutely nothing to do
+ * with the program, I just felt like anyone who made it past the rest of my bullshit with all the additional callbacks and what-have-you. You deserve * some kind of thanks, so here you go.... "Thanks." Best thank you in history right?
+*/
