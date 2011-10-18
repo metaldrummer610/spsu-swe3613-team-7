@@ -10,16 +10,25 @@
 #ifndef _ICD_NETWORK_H
 #define _ICD_NETWORK_H
 
-#include "BaseCode.h"
-#include "ICD9.h"
-#include "ICD10.h"
-#include "ICDExceptions.h"
-#include "ICDCommands.h"
+#define LOG(x) std::cout << x << std::endl
+
+#include "ICDCode.h"
 #include "ICDPacket.h"
+#include "ICDCommands.h"
+#include "ICDNetworkHelpers.h"
+#include "Utils.h"
 #include "ICDCommandPacket.h"
 #include "ICDResponsePacket.h"
-#include "ICDNetworkHelpers.h"
-#include "CodeList.h"
-#include "Utils.h"
 
+/*#include <boost/serialization/export.hpp>
+
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(ICDPacket)
+BOOST_CLASS_EXPORT(ICDPacket)
+BOOST_CLASS_EXPORT(ICDResponsePacket)
+BOOST_CLASS_EXPORT(ICDCommandPacket)
+BOOST_CLASS_EXPORT(ICDCommand)
+BOOST_CLASS_EXPORT(ICDResponse)
+BOOST_CLASS_EXPORT(ICDCommandConvert9To10)
+BOOST_CLASS_EXPORT(ICDResponseConvert9To10)
+*/
 #endif

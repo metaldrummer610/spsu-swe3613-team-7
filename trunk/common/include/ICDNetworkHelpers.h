@@ -2,9 +2,10 @@
 #define _ICD_NETWORK_HELPERS_H
 
 #include <enet/enet.h>
-#include "ICDPacket.h"
+class ICDPacket;
 
 void sendPacket(ICDPacket* packet, ENetPeer* p);
 void sendPacket(ENetPacket* packet, ENetPeer* p);
 
+ICDPacket* getPacket(ENetPacket* p);
 #endif
