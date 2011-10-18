@@ -227,17 +227,6 @@ void submitButtonClick(Fl_Widget* widget, void* ptr)
 		menu->add(temp.c_str(), 0, recentCallback);
 	}
 
-<<<<<<< .mine
-=======
-// End recent menu stuffs
-
-	int len = codeInputBox->size();
-
-	void* str = new char[len];
-	memset(str, 0, len);
-	memcpy(str, codeInputBox->value(), len);
-
->>>>>>> .r49
 	// Let the magic begin...
 	std::string str(codeInputBox->value());
 	ICDCommandConvert9To10* convertCommand = new ICDCommandConvert9To10(str);
