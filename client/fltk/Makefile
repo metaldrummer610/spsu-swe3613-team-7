@@ -5,8 +5,8 @@ EXENAME=client
 #CFLAGS=-Wall -Iinclude/ -I../../common/include/ -o $(EXENAME)  -arch x86_64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_THREAD_SAFE -D_REENTRANT
 #LDFLAGS=/usr/local/lib/libenet.a -lICDNetwork -L../../common/bin/ -lfltk -framework Cocoa -lpthread
 
-CFLAGS=-Wall -Iinclude/ -I../../common/include/ -o $(EXENAME) -g -std=gnu++0x
-LDFLAGS=/usr/local/lib/libenet.a -lICDNetwork -L../../common/bin/ -L/usr/local/lib -lfltk -lpthread -ldl -lm -lX11 /usr/local/lib/libboost_serialization.a
+CFLAGS=-Wall -Iinclude/ -I../../common/include/ -o $(EXENAME) -g -std=gnu++0x $(shell fltk-config --cxxflags)
+LDFLAGS=/usr/local/lib/libenet.a -lICDNetwork -L../../common/bin/ /usr/local/lib/libboost_serialization.a $(shell fltk-config --ldflags)
 SRC=src/main.cpp #src/help.cpp
 
 all : $(SRC)

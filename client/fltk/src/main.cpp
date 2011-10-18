@@ -10,6 +10,8 @@
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Tree.H>
 #include <FL/Fl_Multiline_Output.H>
+#include "FL/Fl_Export.H"
+#include "FL/fl_types.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -319,9 +321,8 @@ void handleConvert9To10Response(ICDResponseConvert9To10* packet)
 	Fl::lock();
 	for(auto it = codes.cbegin(); it != codes.cend(); it++)
 	{
-	//	std::cout << "Got a code!: " << (*it) << std::endl;
+		//std::cout << "Got a code!: " << (*it) << std::endl;
 		// Hey, guess what TODO, we fixed it you can haz your leave now
-		std::cout << "check";
 		std::vector<std::string> columns;
 		columns.push_back(inputFBox);
 		columns.push_back((*it)->getCode());
@@ -333,11 +334,9 @@ void handleConvert9To10Response(ICDResponseConvert9To10* packet)
 			Header[0] = "Searched";
 			Header[1] = "ICD 10 Code";
 		}
-		std::cout << "My mic sounds nice check 1" << std::endl;
 		data.push_back(columns);
 		columns.clear();
 	}
-	std::cout << "My mic sounds nice check 2" << std::endl;
 	if(codes.size() > 0)
 	{
 		ICBMTable->rows(codes.size());
@@ -348,18 +347,10 @@ void handleConvert9To10Response(ICDResponseConvert9To10* packet)
 		Header[0] = "Searched";
 		ICBMTable->rows(1);
 		ICBMTable->redraw();
-	}
-	std::cout << "My mic sounds nice check 3" << std::endl;
+	};
 	Fl::unlock();
-	std::cout << "My mic sounds nice check 4" << std::endl;
-	try
-	{
-		Fl::awake(packet); // We have a problem here and I'm not quite sure why... long story short "y u no work?"
-	}
-	catch(int e)
-	{
-		std::cout << "Houston, we have a problem with an ICBM. Problem num: " << e << std::endl;
-	}
+	Fl::awake(packet);
+
 	for(auto it = codes.begin(); it != codes.end(); it++)
 	{
 		delete (*it);
@@ -534,17 +525,19 @@ int main(int argc, char** argv)
 	initEnet();
 	atexit(destroyEnet);
 
-	Fl_Window* window = new Fl_Window(575, 500, "ICD Conversion Application");
+	Fl_Window* window = new Fl_Window(600, 500, "ICD Conversion Application");
    codeInputBox = new Fl_Input(15, 30, 435, 20);
 
-	Fl_Button* submitButton = new Fl_Button(485, 30, 75, 20, "Submit");
+	Fl_Button* submitButton = new Fl_Button(window->w()-90, 30, 75, 20, "Submit");
+	submitButton->when(FL_WHEN_RELEASE);
 	submitButton->callback(&submitButtonClick, codeInputBox);
+	submitButton->shortcut(FL_ENTER);
 
 	//Fl_Button *defaultButton = new Fl_Button(15, 435, 150, 20, "Make default code");
 	//defaultButton->callback(&defaultButtonClick);
 
 	// Who knew that creating a menu could be so boring......
-	menu = new Fl_Menu_Bar(0, 0, 575, 20, " ");
+	menu = new Fl_Menu_Bar(0, 0, window->w(), 20, " ");
 	menu->add("File/Exit", "esc", exitCallback);
 	menu->add("Recent/", 0, testCallback);
 	menu->add("Help/Get Help", "h", helpCallback);
@@ -563,7 +556,7 @@ int main(int argc, char** argv)
 	ICBMTable->col_header(1);		// enable col headers
 	ICBMTable->col_resize(1);		// enable col resizing
 	ICBMTable->cols(4);
-   ICBMTable->col_width_all(125);   	// setting width of all cols
+   ICBMTable->col_width_all((ICBMTable->w()-40)/4);   	// setting width of all cols
 	ICBMTable->row_header(1);		// enable row headers
    ICBMTable->row_resize(1); 		// enable row resizing
 	ICBMTable->rows(10);	
@@ -571,7 +564,8 @@ int main(int argc, char** argv)
    ICBMTable->when(FL_WHEN_CHANGED|FL_WHEN_RELEASE);
    ICBMTable->end();
 	// end table making
-
+	
+	window->resizable(window);
 	window->end();
 	window->show(argc, argv);
 	
