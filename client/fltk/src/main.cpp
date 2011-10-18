@@ -171,13 +171,9 @@ void recentCallback(Fl_Widget* w, void* ptr)
 	codeInputBox->value(menu->text());
 	inputFBox = codeInputBox->value();
 
-	int len = codeInputBox->size();
-
-	void* str = new char[len];
-	memset(str, 0, len);
-	memcpy(str, codeInputBox->value(), len);
-
-	ICDCommandPacket* command = new ICDCommandPacket(ICD_COMMAND_CONVERT_9_TO_10, str, len);
+	std::string str(codeInputBox->value());
+	ICDCommandConvert9To10* convertCommand = new ICDCommandConvert9To10(str);
+	ICDCommandPacket* command = new ICDCommandPacket(convertCommand);
 	sendPacket(command, peer);
 
 	delete command;
@@ -371,6 +367,8 @@ void handleConvert9To10Response(ICDResponseConvert9To10* packet)
 	}
 
 	codes.clear();
+
+	std::cout << "Atreyu!!! Falkor!!! Need I go on....?" << std::endl;
 }
 
 void handlePacket(ENetPacket* p)
