@@ -1,39 +1,36 @@
 #ifndef _ICD_RESPONSE_PACKET_H
 #define _ICD_RESPONSE_PACKET_H
 
-#include "ICDNetwork.h"
+//#include "ICDNetwork.h"
+
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+
+class ICDPacket;
+class ICDResponse;
 
 class ICDResponsePacket : public ICDPacket
 {
 public:
-	ICDResponsePacket() : ICDPacket(ICD_PACKET_TYPE_RESPONSE), responseType(0), data(NULL), dataLen(0) {}
-	ICDResponsePacket(int respType) : ICDPacket(ICD_PACKET_TYPE_RESPONSE), responseType(respType), data(NULL), dataLen(0) {}
-	ICDResponsePacket(int respType, void* d, int dl) : ICDPacket(ICD_PACKET_TYPE_RESPONSE), responseType(respType), data(d), dataLen(dl) {}
-	~ICDResponsePacket()
-	{
-		if(data != NULL)
-			delete (char*)data;
-	}
+	ICDResponsePacket() : ICDPacket(ICD_PACKET_TYPE_RESPONSE), response(NULL) {}
+	ICDResponsePacket(ICDResponse* resp) : ICDPacket(ICD_PACKET_TYPE_RESPONSE), response(resp) {}
 
-	int getResponseType() { return responseType; }
-	void* getData() { return data; }
-	int getDataLen() { return dataLen; }
-
-	void setResponseType(int i) { responseType = i; }
-	void setData(void* d, int l)
-	{
-		if(d == NULL)
-			throw NullPointerException();
-
-		data = d;
-		dataLen = l;
-	}
-
-	virtual void* toBuffer();
+	ICDResponse* getResponse() { return response; }
+	void setResponse(ICDResponse* i) { response = i; }
 protected:
-	int responseType;
-	void* data;
-	int dataLen;
+	ICDResponse* response;
+	
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<ICDPacket>(*this);
+		ar & response;
+	}
 };
+
+//BOOST_CLASS_EXPORT(ICDResponsePacket)
 
 #endif

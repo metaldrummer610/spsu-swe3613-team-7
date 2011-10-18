@@ -1,39 +1,38 @@
 #ifndef _ICD_COMMAND_PACKET_H
 #define _ICD_COMMAND_PACKET_H
 
-#include "ICDNetwork.h"
+//#include "ICDPacket.h"
+//#include "ICDCommands.h"
+
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+
+class ICDPacket;
+class ICDCommand;
 
 class ICDCommandPacket : public ICDPacket
 {
 public:
-	ICDCommandPacket() : ICDPacket(ICD_PACKET_TYPE_COMMAND), commandType(0), args(NULL), argLen(0) {}
-	ICDCommandPacket(int cmdType) : ICDPacket(ICD_PACKET_TYPE_COMMAND), commandType(cmdType), args(NULL), argLen(0) {}
-	ICDCommandPacket(int cmdType, void* a, int l) :ICDPacket(ICD_PACKET_TYPE_COMMAND), commandType(cmdType), args(a), argLen(l) {}
-	~ICDCommandPacket()
-	{
-		if(args != NULL)
-			delete (char*)args;
-	}
+	ICDCommandPacket() : ICDPacket(ICD_PACKET_TYPE_COMMAND), command(NULL) {}
+	ICDCommandPacket(ICDCommand* cmd) : ICDPacket(ICD_PACKET_TYPE_COMMAND), command(cmd) {}
 
-	int getCommandType() { return commandType; }
-	void* getArgs() { return args; }
-	int getArgLen() { return argLen; }
-
-	void setCommandType(int cmdType) { commandType = cmdType; }
-	void setArgs(void* a, int l)
-	{
-		if(a == NULL)
-			throw NullPointerException();
-
-		args = a;
-		argLen = l;
-	}
-
-	virtual void* toBuffer();
+	ICDCommand* getCommand() { return command; }
+	void setCommand(ICDCommand* cmd) { command = cmd; }
 protected:
-	int commandType;
-	void* args;
-	int argLen;
+	ICDCommand* command;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		std::cout << "Calling ICDCommandPacket serialize" << std::endl;
+		ar & boost::serialization::base_object<ICDPacket>(*this);
+		ar & command;
+	}
 };
+
+//BOOST_CLASS_EXPORT(ICDCommandPacket)
 
 #endif

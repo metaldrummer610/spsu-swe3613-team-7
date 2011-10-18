@@ -20,6 +20,15 @@
 #include <ICDNetwork.h>
 #include <iostream>
 
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/export.hpp>
+
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(ICDPacket)
+BOOST_CLASS_EXPORT(ICDResponsePacket)
+BOOST_CLASS_EXPORT(ICDCommandPacket)
+BOOST_CLASS_EXPORT(ICDCommandConvert9To10)
+BOOST_CLASS_EXPORT(ICDResponseConvert9To10)
+
 Fl_Select_Browser* codeList;
 Fl_Thread enetThread;
 Fl_Menu_Bar* menu;
@@ -50,12 +59,6 @@ public:
 		end(); 
 	}
     ~ICDTable() { }
-
-	void set_data(int r, int c, std::string l)
-	{
-		std::string str(l);
-		//data[r][c] = str;
-	}
 };
 
 // Handle drawing all cells in table
@@ -206,8 +209,6 @@ void submitButtonClick(Fl_Widget* widget, void* ptr)
 	std::cout << "Click!" << std::endl;
 	codeInputBox = (Fl_Input*)ptr;
 	std::cout << "Input: " << codeInputBox->value() << std::endl;
-	std::cout << "len: " << codeInputBox->size() << std::endl;
-	std::cout << "sf: " << sizeof(char) << std::endl;
 
 // Simply ignore everything till the next comment, all this stuff does is add the recent vector to the menu
 // so that it can be accessed properly. At this point it still needs to have a proper callback function
@@ -226,6 +227,8 @@ void submitButtonClick(Fl_Widget* widget, void* ptr)
 		menu->add(temp.c_str(), 0, recentCallback);
 	}
 
+<<<<<<< .mine
+=======
 // End recent menu stuffs
 
 	int len = codeInputBox->size();
@@ -234,8 +237,11 @@ void submitButtonClick(Fl_Widget* widget, void* ptr)
 	memset(str, 0, len);
 	memcpy(str, codeInputBox->value(), len);
 
+>>>>>>> .r49
 	// Let the magic begin...
-	ICDCommandPacket* command = new ICDCommandPacket(ICD_COMMAND_CONVERT_9_TO_10, str, len);
+	std::string str(codeInputBox->value());
+	ICDCommandConvert9To10* convertCommand = new ICDCommandConvert9To10(str);
+	ICDCommandPacket* command = new ICDCommandPacket(convertCommand);
 	sendPacket(command, peer);
 
 	delete command;
@@ -321,18 +327,14 @@ void destroyEnet()
 	enet_host_destroy(client);
 }
 
-void handleConvert9To10Response(ICDResponsePacket* packet)
+void handleConvert9To10Response(ICDResponseConvert9To10* packet)
 {
-	dumpBuffer((const char*)packet->getData(), packet->getDataLen());
-	// The payload of one of these packets is a code list
-	// A code list is basically a vector of BaseCode*'s
-	std::vector<BaseCode*> codes = bufferToCodeList(packet->getData());
+	std::vector<ICDCode*> codes = packet->getCodes();
 
 	Fl::lock();
-	for(std::vector<BaseCode*>::iterator it = codes.begin(); it != codes.end(); it++)
+	for(auto it = codes.cbegin(); it != codes.cend(); it++)
 	{
 	//	std::cout << "Got a code!: " << (*it) << std::endl;
-		// TODO: Add codes to ICBM Table
 		// Hey, guess what TODO, we fixed it you can haz your leave now
 		std::cout << "check";
 		std::vector<std::string> columns;
@@ -341,7 +343,7 @@ void handleConvert9To10Response(ICDResponsePacket* packet)
 		columns.push_back((*it)->getDesc());
 		columns.push_back((*it)->getFlags());
 		
-		if((*it)->getType() == 1)
+		if((*it)->getType() == CodeType::ICD10)
 		{
 			Header[0] = "Searched";
 			Header[1] = "ICD 10 Code";
@@ -373,7 +375,7 @@ void handleConvert9To10Response(ICDResponsePacket* packet)
 	{
 		std::cout << "Houston, we have a problem with an ICBM. Problem num: " << e << std::endl;
 	}
-	for(std::vector<BaseCode*>::iterator it = codes.begin(); it != codes.end(); it++)
+	for(auto it = codes.begin(); it != codes.end(); it++)
 	{
 		delete (*it);
 		(*it) = NULL;
@@ -385,7 +387,7 @@ void handleConvert9To10Response(ICDResponsePacket* packet)
 void handlePacket(ENetPacket* p)
 {
 	std::cout << "ZOMG WE GOT A PACKET1!!1!!!" << std::endl;
-	ICDPacket* packet = ICDPacket::createPacketFromBuffer(p->data);
+	ICDPacket* packet = getPacket(p);
 
 	switch(packet->getType())
 	{
@@ -396,13 +398,16 @@ void handlePacket(ENetPacket* p)
 		}
 		case ICD_PACKET_TYPE_RESPONSE:
 		{
-			ICDResponsePacket* response = (ICDResponsePacket*)packet;
+			ICDResponsePacket* responsePacket = (ICDResponsePacket*)packet;
+			ICDResponse* response = responsePacket->getResponse();
 			if(response->getResponseType() == ICD_RESPONSE_CONVERT_9_TO_10)
 			{
-				handleConvert9To10Response(response);
+				handleConvert9To10Response((ICDResponseConvert9To10*)response);
 			}
 		}
 	}
+
+	delete packet;
 }
 
 void* enetMain(void* p)

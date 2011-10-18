@@ -24,12 +24,25 @@
 *
 */
 
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
 #include <enet/enet.h>
+
 #include <iostream>
 #include "ICDNetwork.h"
 #include <string>
 #include <string.h>
+#include <sstream>
 #include <pqxx/pqxx>
+
+#include <boost/serialization/export.hpp>
+
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(ICDPacket)
+BOOST_CLASS_EXPORT(ICDResponsePacket)
+BOOST_CLASS_EXPORT(ICDCommandPacket)
+BOOST_CLASS_EXPORT(ICDCommandConvert9To10)
+BOOST_CLASS_EXPORT(ICDResponseConvert9To10)
 
 using namespace pqxx;
 
@@ -170,9 +183,9 @@ char* get10DescQuery(char* cstr) {
 * \param v the vector to put the results in
 * \return A vector of Basecodes
 */
-std::vector<BaseCode*> processResults(result r,std::vector<BaseCode*> v) {
-	for(result::const_iterator row=r.begin();row!=r.end();++row) {
-		BaseCode* code = new BaseCode(intToCode(0),(char*)row[2].c_str(),(int)strlen(row[2].c_str()),(char*)row[3].c_str(),(int)strlen(row[3].c_str()),(char*)row[4].c_str(),(int)strlen(row[4].c_str()));
+std::vector<ICDCode*> processResults(result& r, std::vector<ICDCode*>& v, CodeType type) {
+	for(result::const_iterator row = r.begin(); row != r.end(); ++row) {
+		ICDCode* code = new ICDCode(type, row[2].c_str(), row[3].c_str(), row[4].c_str());
 		v.push_back(code);
 	}
 	return v;
@@ -183,9 +196,9 @@ std::vector<BaseCode*> processResults(result r,std::vector<BaseCode*> v) {
 * \param r The results to process
 * \return A new vector of Basecodes
 */
-std::vector<BaseCode*> processResults(result r) {
-	std::vector<BaseCode*> v;
-	v=processResults(r,v);
+std::vector<ICDCode*> processResults(result r, CodeType type) {
+	std::vector<ICDCode*> v;
+	v = processResults(r, v, type);
 	return v;
 }
 
@@ -195,108 +208,81 @@ std::vector<BaseCode*> processResults(result r) {
 * \cstr The char* to be searched
 * \result The result
 */
-std::vector<BaseCode*> handleQuery(char* cstr) {
+std::vector<ICDCode*> handleQuery(char* cstr) {
 	connection *c = connectToDatabase();
-	char* nineCodeQuery = get9CodeQuery(cstr);		
-	char* nineDescQuery = get9DescQuery(cstr);		
-	char* tenCodeQuery = get10CodeQuery(cstr);		
-	char* tenDescQuery = get10DescQuery(cstr);		
+	char* nineCodeQuery = get9CodeQuery(cstr);
+	char* nineDescQuery = get9DescQuery(cstr);
+	char* tenCodeQuery = get10CodeQuery(cstr);
+	char* tenDescQuery = get10DescQuery(cstr);
 	if(DEBUG) {
 		std::cout << "nineCodeQuery=" << nineCodeQuery << std::endl;
 		std::cout << "nineDescQuery=" << nineDescQuery << std::endl;
 		std::cout << "tenCodeQuery=" << tenCodeQuery << std::endl;
 		std::cout << "tenDescQuery=" << tenDescQuery << std::endl;
-	}	
+	}
 	result r = runQuery(c,nineCodeQuery);
 	if(DEBUG)
 		printResults(r);
-	std::vector<BaseCode*> v = processResults(r);	
+	std::vector<ICDCode*> v = processResults(r, CodeType::ICD9);
 
 	r = runQuery(c,nineDescQuery);
 	if(DEBUG)
 		printResults(r);
-	v = processResults(r,v);	
+	v = processResults(r, v, CodeType::ICD9);
 
 	r = runQuery(c,tenCodeQuery);
 	if(DEBUG)
 		printResults(r);
-	v = processResults(r,v);	
+	v = processResults(r, v, CodeType::ICD10);
 	
 	r = runQuery(c,tenDescQuery);
 	if(DEBUG)
 		printResults(r);
-	v = processResults(r,v);	
+	v = processResults(r, v, CodeType::ICD10);
 
-	disconnect(c);	
-	return v;	
-
+	disconnect(c);
+	return v;
 }
 
-
-void handleConvert9To10Command(ICDCommandPacket* packet, ENetPeer* peer)
+void handleConvert9To10Command(ICDCommandConvert9To10* packet, ENetPeer* peer)
 {
-	//TODO: Jeff: We would add calls to the database here
-	// Since we know this is a convert 9 to 10 packet, we know what the payload is
-	// The payload is a string, and the length of that payload is the string length
-	// Therefore, we can just do a strncpy and stuff it into a c-string
+	std::vector<ICDCode*> codes = handleQuery((char*)packet->getCode().c_str());
 
-	char cstr[packet->getArgLen() + 1];
-	memset(cstr, 0, packet->getArgLen()); // Clear out the memory, just in case :)
-	strncpy(cstr, (char*)packet->getArgs(), packet->getArgLen());
-	cstr[packet->getArgLen()] = '\0';
+	ICDResponseConvert9To10* respConvert = new ICDResponseConvert9To10(codes);
+	ICDResponsePacket* resp = new ICDResponsePacket(respConvert);
 	
-	//Handle Query
-//	result r=handleQuery(cstr);	
-	//Process Results
-	//std::vector<BaseCode*> v = processResults(r);
-	
-	std::vector<BaseCode*> v=handleQuery(cstr);	
-	
-
-	void* codeBuffer = codeListToBuffer(v);
-	int bufferSize = 0;
-	memcpy(&bufferSize, codeBuffer, sizeof(int));
-	bufferSize += sizeof(int) + sizeof(int);
-	std::cout << "Dumping the code buffer" << std::endl;
-	dumpBuffer((const char*)codeBuffer, bufferSize);
-
-	ICDResponsePacket* resp = new ICDResponsePacket(ICD_RESPONSE_CONVERT_9_TO_10, codeBuffer, bufferSize);
-
 	sendPacket(resp, peer);
-	delete resp;
-//	delete (char*)codeBuffer;
-
-	// Delete the vector
-	for(std::vector<BaseCode*>::iterator it = v.begin(); it != v.end(); it++)
-	{
-		delete (*it);
-		*it = NULL;
-	}
-
-	v.clear();
 }
 
 void handlePacket(ENetPacket* p, ENetPeer* peer)
 {
-	ICDPacket* packet = ICDPacket::createPacketFromBuffer(p->data);
+	LOG("about to get the packet");
+	ICDPacket* packet = getPacket(p);
+	LOG("Got the packet");
 
 	switch(packet->getType())
 	{
 		case ICD_PACKET_TYPE_COMMAND:
 			{
+				LOG("Its a command");
 				ICDCommandPacket* commandPacket = (ICDCommandPacket*)packet;
-				if(commandPacket->getCommandType() == ICD_COMMAND_CONVERT_9_TO_10)
+				LOG("Casting...");
+				ICDCommand* command = commandPacket->getCommand();
+				LOG("Casted");
+				std::cout << "commandType: " << command->getCommandType() << std::endl;
+				if(command->getCommandType() == ICD_COMMAND_CONVERT_9_TO_10)
 				{
-					handleConvert9To10Command(commandPacket, peer);
+					LOG("Convert 9 to 10");
+					handleConvert9To10Command((ICDCommandConvert9To10*)command, peer);
+					LOG("Handled");
 				}
 			}
 			break;
-		case ICD_PACKET_TYPE_RESPONSE:
-			break;
 		default:
-			std::cerr << "ERROR!! Invalid packet type encountered!" << std::endl;
 			break;
 	}
+
+	delete packet;
 }
 
 void loop()
@@ -311,7 +297,7 @@ void loop()
 			{
 				case ENET_EVENT_TYPE_CONNECT:
 					std::cout << "Client connected" << std::endl;
-					
+
 					event.peer->data = (void*)peerNumber;
 					peerNumber++;
 					break;
@@ -321,7 +307,6 @@ void loop()
 					break;
 				case ENET_EVENT_TYPE_DISCONNECT:
 					std::cout << event.peer->data << " disconnected" << std::endl;
-					// Reset client's information
 					event.peer->data = NULL;
 					break;
 				case ENET_EVENT_TYPE_NONE:
@@ -334,7 +319,8 @@ void loop()
 int main()
 {
 	// Initialize ENet
-	if (enet_initialize() != 0) {
+	if(enet_initialize() != 0)
+	{
 		std::cout << "enet did not initialize" << std::endl;
 		exit(EXIT_FAILURE);
 	}
@@ -344,7 +330,8 @@ int main()
 
 	server = enet_host_create(&address, 32, 2, 0, 0);
 
-	if (server == NULL) {
+	if(server == NULL)
+	{
 		std::cout << "server is null.... that is bad" << std::endl;
 		exit(EXIT_FAILURE);
 	}
@@ -355,4 +342,6 @@ int main()
 
 	// End of program
 	enet_host_destroy(server);
+
+	return 0;
 }
