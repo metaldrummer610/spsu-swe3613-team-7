@@ -495,8 +495,8 @@ void helpCallback(Fl_Widget* w, void* ptr)
 	helpTree->add("1. ICD Conversion/2. How to read the table");
 	helpTree->add("2. Recent/1. How to use the recent menu");
 
-	helpTree->close("ICD Conversion");
-	helpTree->close("Recent");
+	helpTree->close("1. ICD Conversion");
+	helpTree->close("2. Recent");
 
 	helpWindow->end();
 	helpWindow->show();
@@ -529,9 +529,10 @@ int main(int argc, char** argv)
    codeInputBox = new Fl_Input(15, 30, 435, 20);
 
 	Fl_Button* submitButton = new Fl_Button(window->w()-90, 30, 75, 20, "Submit");
-	submitButton->when(FL_WHEN_RELEASE);
 	submitButton->callback(&submitButtonClick, codeInputBox);
-	submitButton->shortcut(FL_ENTER);
+
+	codeInputBox->callback(&submitButtonClick, codeInputBox);
+	codeInputBox->when(FL_WHEN_ENTER_KEY | FL_WHEN_NOT_CHANGED);
 
 	//Fl_Button *defaultButton = new Fl_Button(15, 435, 150, 20, "Make default code");
 	//defaultButton->callback(&defaultButtonClick);
