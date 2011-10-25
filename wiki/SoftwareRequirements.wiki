@@ -10,6 +10,7 @@ To build the project, the following applications are required:
   * boost (in libs folder)
   * enet (in libs folder)
   * fltk (in libs folder)
+  * libx11-dev
 
 
 Steps to build:
