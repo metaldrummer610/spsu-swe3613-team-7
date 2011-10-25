@@ -15,7 +15,7 @@ To build the project, the following applications are required:
 Steps to build:
   # Build the Boost libraries
    # Run tar -xvf on boost_1_47_0.tar.bz2
-   # Run a ./configure
+   # Run a ./bootstrap.sh
    # Run a sudo ./b2 install
   # Build the fltk libraries
    # Run a tar -xvf on fltk-1.3.0-source.tar.gz
