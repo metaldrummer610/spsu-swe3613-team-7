@@ -11,7 +11,10 @@ To build the project, the following applications are required:
   * boost (in libs folder)
   * enet (in libs folder)
   * fltk (in libs folder)
+  * apache log4cxx (in libs folder)
   * libx11-dev
+  * libapr1-dev
+  * libaprutil1-dev
 
 = Build Instructions =
 Steps to build:
@@ -19,12 +22,17 @@ Steps to build:
    # Run tar -xvf on boost_1_47_0.tar.bz2
    # Run a ./bootstrap.sh
    # Run a sudo ./b2 install
+  # Build the apache log4cxx library
+   # Run tar -xvf on apache-log4cxx-0.10.0.tar.gz
+   # Run ./configure
+   # Run a make
+   # Run a sudo make install
   # Build the fltk libraries
    # Run a tar -xvf on fltk-1.3.0-source.tar.gz
    # Run a ./configure
    # Run a make
    # Run a sudo make install
-  # Build the enet libraries
+  # Build the enet library
    # Run tar -xvf on enet-1.3.3.tar.gz
    # Run a ./configure
    # Run a make
@@ -44,6 +52,9 @@ To run the server, run a "make run" from the server directory, or execute the "s
 To run the client, run a "make run" from the client/fltk directory, or execute the "client" binary in the client/fltk/bin directory.
 
 Running "make clean" in either the common, server, or client/fltk directories will clean up the binaries from the respective folder.
+
+= Building Apache log4cxx =
+The logging library may require some TLC to get it to build... While building the code, I had to modify a few files and add references to "string.h" and "stdlib.h". I'm not sure why they would release their code with those blatant errors, but whatever...
 
 = Adding a user for database access =
 Reference the following link: [http://www.cyberciti.biz/faq/howto-add-postgresql-user-account/ Adding A User To PostgreSQL]
