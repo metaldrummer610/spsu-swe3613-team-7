@@ -1,6 +1,7 @@
 #summary Requirements for building the project
 #labels Featured
 
+= Libraries Required =
 To build the project, the following applications are required:
   * g++
   * make
@@ -12,7 +13,7 @@ To build the project, the following applications are required:
   * fltk (in libs folder)
   * libx11-dev
 
-
+= Build Instructions =
 Steps to build:
   # Build the Boost libraries
    # Run tar -xvf on boost_1_47_0.tar.bz2
@@ -43,3 +44,54 @@ To run the server, run a "make run" from the server directory, or execute the "s
 To run the client, run a "make run" from the client/fltk directory, or execute the "client" binary in the client/fltk/bin directory.
 
 Running "make clean" in either the common, server, or client/fltk directories will clean up the binaries from the respective folder.
+
+= Adding a user for database access =
+Reference the following link: [http://www.cyberciti.biz/faq/howto-add-postgresql-user-account/ Adding A User To PostgreSQL]
+
+Run the following commands to set up the user for the database:
+{{{
+sudo adduser swe3613
+}}}
+The password for the user is "swe3613". Hit enter for all the information fields, we don't really care. Must be done as root.
+
+{{{
+sudo su - postgres
+}}}
+Log into the postgres user account
+
+{{{
+psql template1
+}}}
+Access the template1 database.
+
+{{{
+CREATE USER swe3613 WITH PASSWORD 'swe3613';
+}}}
+This creates the user in the database.
+
+{{{
+CREATE DATABASE swe3613;
+}}}
+This creates the database for the application.
+
+{{{
+GRANT ALL PRIVILEGES ON DATABASE swe3613 to swe3613;
+}}}
+Gives the user access to the database.
+
+Now, before you can log in easily, there is a config setting you have to change. If you open /etc/postgresql/9.1/main/pg_hba.conf in a root text editor and navigate down to the line that says:
+{{{
+# Database administrative login by Unix domain socket
+}}}
+
+The line below that should say something to the effect of:
+{{{
+local   all    postgres   peer
+}}}
+
+That line should be changed to say:
+{{{
+local   all    all  trust
+}}}
+
+This will allow you to easily log in without complaining about "Peer authentication" errors.
