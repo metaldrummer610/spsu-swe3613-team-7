@@ -6,21 +6,26 @@
 *
 * Here's the DB schema:
 * CREATE TABLE icd_9_descriptions (
-*	 icd_9_code VARCHAR(10) PRIMARY KEY, 
-*	 icd_9_description VARCHAR(500) DEFAULT 'No Description Found'
+* 	icd_9_code VARCHAR(10) PRIMARY KEY, 
+* 	icd_9_description VARCHAR(500) DEFAULT 'No Description Found'
 * );
 *
 * CREATE TABLE icd_10_cm_descriptions (
-*	 icd_10_code VARCHAR(10) PRIMARY KEY,
-*	 icd_10_description VARCHAR(500) DEFAULT 'No Description Found' 
+*	icd_10_code VARCHAR(10) PRIMARY KEY,
+*	icd_10_description VARCHAR(500) DEFAULT 'No Description Found' 
 * );
 *
 * CREATE TABLE cm_gems (
-*	 icd_9_code VARCHAR(10) REFERENCES icd_9_descriptions,
-*	 icd_10_code VARCHAR(10) REFERENCES icd_10_cm_descriptions,
-*	 flags CHAR(5),
-* 	 PRIMARY KEY (icd_9_code, icd_10_code, flags)
-* );	
+*	icd_9_code VARCHAR(10) REFERENCES icd_9_descriptions,
+*	icd_10_code VARCHAR(10) REFERENCES icd_10_cm_descriptions,
+*	flags CHAR(5),
+*	PRIMARY KEY (icd_9_code, icd_10_code, flags)
+*);
+*
+* CREATE TABLE dx_codes (
+*	icd_10_code VARCHAR(10) REFERENCES icd_10_cm_descriptions,
+*	dx_code VARCHAR(10) PRIMARY KEY
+* );
 *
 */
 
@@ -35,6 +40,7 @@
 #include <string.h>
 #include <sstream>
 #include <pqxx/pqxx>
+#include <string.h>
 
 #include <boost/serialization/export.hpp>
 
@@ -55,23 +61,6 @@ ENetAddress address;
 int peerNumber = 0;
 
 /**
-* Prints a result object
-* \param r The result to print
-*/
-void printResults(result r) {
-	for(result::const_iterator row=r.begin();row!=r.end();++row) {
-		std::cout << "[";
-   	for(result::tuple::const_iterator field=row->begin();field!=row->end();++field) {
-      	std::cout << field->c_str();
-			if(field!=row->end()-1)
-				std::cout << ",";		
-		}
-		std::cout << "]" << std::endl;
-	}
-	std::cout << "Results:" << r.size() << std::endl;
-}
-
-/**
 * Runs a query
 * \param c The connection to use
 * \param query The query to search
@@ -89,6 +78,49 @@ result runQuery(connection *c, std::string query) {
 		exit(EXIT_FAILURE);
 	}
 	return r;
+}
+
+/**
+* Inserts a new entry into the DX table
+* \param dx_code The dx_code to be entered
+* \param icd_10_code The icd_10_code to be entered
+*/
+void insertDxCode(connection *c, std::string dx_code, std::string icd_10_code) {
+
+	std::string query = "INSERT INTO dx_codes VALUES (upper('" + icd_10_code + "'),'" + dx_code + "')";
+//	std::cout << "dx_code=" << dx_code << "query=" << query << std::endl;
+///	strcat(query,dx_code);
+//	query+=dx_code;
+//	std::cout << "dx_code=" << dx_code << "query=" << query << std::endl;	
+/*	strcat(query,",");
+	strcat(query,icd_10_code);
+	strcat(query,")");
+
+
+
+*/
+	// + dx_code + "," //+ icd_10_code + ")";
+	//std::cout << "insertdxcodequery=" << query << std::endl;	
+	LOG("dxQuery="+query);
+	runQuery(c,query);
+}
+
+
+/**
+* Prints a result object
+* \param r The result to print
+*/
+void printResults(result r) {
+	for(result::const_iterator row=r.begin();row!=r.end();++row) {
+		std::cout << "[";
+   	for(result::tuple::const_iterator field=row->begin();field!=row->end();++field) {
+      	std::cout << field->c_str();
+			if(field!=row->end()-1)
+				std::cout << ",";		
+		}
+		std::cout << "]" << std::endl;
+	}
+	std::cout << "Results:" << r.size() << std::endl;
 }
 
 /**
@@ -135,10 +167,25 @@ char* get9CodeQuery(char* cstr) {
 /**
 * Gets a query to search 9 descriptions
 * \param cstr The char* to search for
-* \return A query to search 9 descriptions
+* \return A query to search 9 descriptionINSERT INTO dx_codes VALUES (upper('V222'),'Accidental')s
 */
 char* get9DescQuery(char* cstr) {
 	char *first_half = (char*)"select g.icd_9_code, i_9.icd_9_description, g.icd_10_code, i_10.icd_10_description, g.flags FROM icd_9_descriptions i_9 JOIN cm_gems g ON i_9.icd_9_code = g.icd_9_code JOIN icd_10_cm_descriptions i_10 ON g.icd_10_code = i_10.icd_10_code where upper(i_9.icd_9_description) LIKE upper('%";
+	char *query = new char[strlen(first_half)+strlen(cstr)+4];
+	memset(query, 0, strlen(first_half)+strlen(cstr)+3);	
+	strncpy(query,first_half,strlen(first_half));
+	strcat(query,cstr);
+	strcat(query,"%')");
+	return query;
+}
+
+/**
+* Gets a query to search dx codes
+* \param cstr The char* to search for
+* \return A query to search dx codes
+*/
+char* getDxCodeQuery(char* cstr) {
+	char *first_half = (char*)"select g.icd_9_code, i_9.icd_9_description, g.icd_10_code, i_10.icd_10_description, g.flags FROM icd_9_descriptions i_9 JOIN cm_gems g ON i_9.icd_9_code = g.icd_9_code JOIN icd_10_cm_descriptions i_10 ON g.icd_10_code = i_10.icd_10_code JOIN dx_codes dx ON dx.icd_10_code = i_10.icd_10_code where upper(dx.dx_code) LIKE upper('%";
 	char *query = new char[strlen(first_half)+strlen(cstr)+4];
 	memset(query, 0, strlen(first_half)+strlen(cstr)+3);	
 	strncpy(query,first_half,strlen(first_half));
@@ -214,21 +261,32 @@ std::vector<ICDCode*> handleQuery(char* cstr) {
 	char* nineDescQuery = get9DescQuery(cstr);
 	char* tenCodeQuery = get10CodeQuery(cstr);
 	char* tenDescQuery = get10DescQuery(cstr);
+	char* dxQuery = getDxCodeQuery(cstr);	
 	if(DEBUG) {
 		std::cout << "nineCodeQuery=" << nineCodeQuery << std::endl;
 		std::cout << "nineDescQuery=" << nineDescQuery << std::endl;
 		std::cout << "tenCodeQuery=" << tenCodeQuery << std::endl;
 		std::cout << "tenDescQuery=" << tenDescQuery << std::endl;
 	}
-	result r = runQuery(c,nineCodeQuery);
+	LOG("dxquery=");
+	LOG(dxQuery);
+
+	result r;
+
+	r = runQuery(c,dxQuery);
 	if(DEBUG)
 		printResults(r);
-	std::vector<ICDCode*> v = processResults(r, CodeType::ICD9);
+	std::vector<ICDCode*> v = processResults(r, CodeType::ICD10);
+	
+	r = runQuery(c,nineCodeQuery);
+	if(DEBUG)
+		printResults(r);
+	v = processResults(r, v, CodeType::ICD10);
 
 	r = runQuery(c,nineDescQuery);
 	if(DEBUG)
 		printResults(r);
-	v = processResults(r, v, CodeType::ICD9);
+	v = processResults(r, v, CodeType::ICD10);
 
 	r = runQuery(c,tenCodeQuery);
 	if(DEBUG)
@@ -274,7 +332,7 @@ void handlePacket(ENetPacket* p, ENetPeer* peer)
 				{
 					LOG("Convert 9 to 10");
 					handleConvert9To10Command((ICDCommandConvert9To10*)command, peer);
-					LOG("Handled");
+					LOG("Handled. Hyaaa! Hyaaa Falkor! Onward!!11?eleven");
 				}
 			}
 			break;
