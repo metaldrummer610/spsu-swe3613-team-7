@@ -1,0 +1,44 @@
+#summary Requirements for building the project
+#labels Featured
+
+To build the project, the following applications are required:
+  * g++
+  * make
+  * subversion (svn)
+  * postgresql
+  * libpqxx
+  * boost (in libs folder)
+  * enet (in libs folder)
+  * fltk (in libs folder)
+
+
+Steps to build:
+  # Build the Boost libraries
+   # Run tar -xvf on boost_1_47_0.tar.bz2
+   # Run a ./configure
+   # Run a sudo ./b2 install
+  # Build the fltk libraries
+   # Run a tar -xvf on fltk-1.3.0-source.tar.gz
+   # Run a ./configure
+   # Run a make
+   # Run a sudo make install
+  # Build the enet libraries
+   # Run tar -xvf on enet-1.3.3.tar.gz
+   # Run a ./configure
+   # Run a make
+   # Run a sudo make install
+  # Build the common library
+   # Move into the common directory
+   # Run make
+  # Build the server
+   # Move into the server directory
+   # Run make
+  # Build the client
+   # Move into the client/fltk directory
+   # Run make
+
+To run the server, run a "make run" from the server directory, or execute the "server" binary in the server/bin/ folder.
+
+To run the client, run a "make run" from the client/fltk directory, or execute the "client" binary in the client/fltk/bin directory.
+
+Running "make clean" in either the common, server, or client/fltk directories will clean up the binaries from the respective folder.
