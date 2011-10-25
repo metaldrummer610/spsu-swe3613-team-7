@@ -315,7 +315,7 @@ void destroyEnet()
 		  enetThreadRunning = false;
 		  enet_peer_disconnect(peer, 0);
 
-		  while(enet_host_service(client, &event, 3000) > 0)
+		  while(enet_host_service(client, &event, 500) > 0)
 		  {
 					 switch(event.type)
 					 {

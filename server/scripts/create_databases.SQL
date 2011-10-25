@@ -1,6 +1,7 @@
-DROP TABLE cm_gems;
-DROP TABLE icd_9_descriptions;
-DROP TABLE icd_10_cm_descriptions;
+DROP TABLE IF EXISTS cm_gems CASCADE;
+DROP TABLE IF EXISTS icd_9_descriptions CASCADE;
+DROP TABLE IF EXISTS icd_10_cm_descriptions CASCADE;
+DROP TABLE IF EXISTS dx_codes CASCADE;
 
 CREATE TABLE icd_9_descriptions (
 	icd_9_code VARCHAR(10) PRIMARY KEY, 
