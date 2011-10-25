@@ -47,3 +47,5 @@ Breaking down the work between members:
 || Greg || Figuring our Palorian and getting documentation into the system ||
 || David || Working on the GUI ||
 || Kevin || Communicating with the client to insure all requirements will be met ||
+
+All of the release tracking from now on will be done in Pivotal Tracker.
