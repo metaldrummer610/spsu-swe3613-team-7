@@ -106,7 +106,7 @@ void disconnect(connection *c) {
 connection* connectToDatabase() {
 	try {
 		//Make connection
-		connection *c = new connection("host=localhost dbname=swe3613 user=jeff password=swe3613");
+		connection *c = new connection("host=localhost dbname=swe3613 user=swe3613 password=swe3613");
 		if(DEBUG)
 			std::cout << "Connected to swe3613@localhost." << std::endl;
 		return c;
