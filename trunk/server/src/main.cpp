@@ -56,6 +56,9 @@ using namespace pqxx;
 #define DEBUG 0
 #define PORT 9000
 
+///Limits the number of results per query (for blank queries, "the", etc)
+#define MAX_RESULTS 50
+
 ENetHost* server;
 ENetAddress address;
 int peerNumber = 0;
@@ -86,25 +89,10 @@ result runQuery(connection *c, std::string query) {
 * \param icd_10_code The icd_10_code to be entered
 */
 void insertDxCode(connection *c, std::string dx_code, std::string icd_10_code) {
-
 	std::string query = "INSERT INTO dx_codes VALUES (upper('" + icd_10_code + "'),'" + dx_code + "')";
-//	std::cout << "dx_code=" << dx_code << "query=" << query << std::endl;
-///	strcat(query,dx_code);
-//	query+=dx_code;
-//	std::cout << "dx_code=" << dx_code << "query=" << query << std::endl;	
-/*	strcat(query,",");
-	strcat(query,icd_10_code);
-	strcat(query,")");
-
-
-
-*/
-	// + dx_code + "," //+ icd_10_code + ")";
-	//std::cout << "insertdxcodequery=" << query << std::endl;	
-	LOG("dxQuery="+query);
+	//LOG("dxQuery="+query);
 	runQuery(c,query);
 }
-
 
 /**
 * Prints a result object
@@ -231,7 +219,9 @@ char* get10DescQuery(char* cstr) {
 * \return A vector of Basecodes
 */
 std::vector<ICDCode*> processResults(result& r, std::vector<ICDCode*>& v, CodeType type) {
-	for(result::const_iterator row = r.begin(); row != r.end(); ++row) {
+	std::cout << "Processing Results v.size()=" << v.size() << std::endl;		
+	int j=0;		
+	for(result::const_iterator row = r.begin(); row != r.end() && j<MAX_RESULTS; ++row, ++j) {
 		ICDCode* code = new ICDCode(type, row[2].c_str(), row[3].c_str(), row[4].c_str());
 		v.push_back(code);
 	}
@@ -246,9 +236,9 @@ std::vector<ICDCode*> processResults(result& r, std::vector<ICDCode*>& v, CodeTy
 std::vector<ICDCode*> processResults(result r, CodeType type) {
 	std::vector<ICDCode*> v;
 	v = processResults(r, v, type);
+	//printResults(r);
 	return v;
 }
-
 
 /** 
 * Runs the queries
@@ -268,8 +258,8 @@ std::vector<ICDCode*> handleQuery(char* cstr) {
 		std::cout << "tenCodeQuery=" << tenCodeQuery << std::endl;
 		std::cout << "tenDescQuery=" << tenDescQuery << std::endl;
 	}
-	LOG("dxquery=");
-	LOG(dxQuery);
+	//LOG("dxquery=");
+	//LOG(dxQuery);
 
 	result r;
 
