@@ -12,6 +12,9 @@
 #include <FL/Fl_Multiline_Output.H>
 #include "FL/Fl_Export.H"
 #include "FL/fl_types.h"
+#include <FL/Fl_Tabs.H>
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Multiline_Input.H>
 #include <stdio.h>
 #include <string.h>
 
@@ -47,6 +50,7 @@ std::string inputFBox;
 std::vector<std::vector<std::string> > data;
 std::vector<std::vector<std::string> > codesToClaim;
 std::vector<std::string> recent;
+std::vector<std::string> newDxCode;
 
 class ICDTable : public Fl_Table_Row
 {
@@ -89,7 +93,7 @@ void ICDTable::draw_cell(TableContext context, int R, int C, int X, int Y, int W
 
 					 case CONTEXT_ROW_HEADER:
 								{
-										  sprintf(s, "%d", R);
+										  sprintf(s, "%d", R+1);
 										  fl_push_clip(X, Y, W, H);
 										  {
 													 fl_draw_box(FL_THIN_UP_BOX, X, Y, W, H, color());
@@ -160,13 +164,13 @@ void table_cb(Fl_Widget* o, void* cdata)
 		  // I'm fairly certain at this point that this callback is by far the most useless callback
 		  // in this project, I've seen more productivity in a method that returns the sum of 1+1
 		  Fl_Table *table = (Fl_Table*)cdata;
-		  fprintf(stderr, "%s callback: row=%d col=%d, context=%d, event=%d clicks=%d\n",
+		 /* fprintf(stderr, "%s callback: row=%d col=%d, context=%d, event=%d clicks=%d\n",
 								(const char*)table->label(),
 								(int)table->callback_row(),
 								(int)table->callback_col(),
 								(int)table->callback_context(),
 								(int)Fl::event(),
-								(int)Fl::event_clicks());
+								(int)Fl::event_clicks());*/
 		  currentSRow = (int)(table->callback_row());
 }
 
@@ -537,6 +541,10 @@ void aboutCallback(Fl_Widget* w, void* ptr)
 
 void addToClaimCallback(Fl_Widget* w, void* ptr)
 {
+		  // Another one of those function that really doesn't do much but has to be there to be sure that you don't
+		  // add duplicate codes to your claim. I don't think that the insurance company would like you doing that...
+		  // But without this you could be robin hood.......
+
 		  bool inClaim = false;
 		  for(int i = 0; i < codesToClaim.size(); i++)
 		  {
@@ -549,34 +557,158 @@ void addToClaimCallback(Fl_Widget* w, void* ptr)
 		  }
 }
 
+// This stuff right here is only here because it kept throwing a seg fault when I did something
+// so in order to avoid that and make things less complicated for me I just moved it here.
+// Basically all this is is just a window and bool value that all you to click yes on
+// the prompt window and it'll bring up a thing to remove some codes. Also it makes it so
+// that the claim window thingy below works properly with that if statement.
+// so ya... thats the run down.
+
+Fl_Window* prompt;
+ICDTable* currentClaim;
+bool isPrompt = false;
+
+// This function just kills windows, it's an assassian of windows. Awesome huh?
+void windowKill(Fl_Widget* w, void* ptr)
+{
+		 prompt->hide();
+		 prompt->default_callback(prompt, ptr);
+}
+
+void removeElementCallback(Fl_Widget* w, void* ptr)
+{
+		  codesToClaim.erase(codesToClaim.begin() + currentSRow);
+		  if(codesToClaim.size() > 0)
+					 currentClaim->rows(currentClaim->rows() - 1);
+		  currentClaim->redraw();
+}
+
 void toClaimCallback(Fl_Widget* w, void* ptr)
 {
+		  // This guy right here, hes a man. All this function does is show you what you're about to claim
+		  // Then you can remove stuff and head back to that main screen and add some more. Like a real man
+		  // He builds and destroys. He's not like the bitch below...
+		  if(isPrompt)
+		  {
+					 prompt->hide();
+					 prompt->default_callback(prompt, ptr);
+					 isPrompt = false;
+		  }
 
+		  Fl_Window* toClaim = new Fl_Window(600, 400, "Current Claim");
+		  {
+					 currentClaim = new ICDTable(15, 15, toClaim->w() - 30, toClaim->h() - 80);
+					 {
+								currentClaim->selection_color(FL_YELLOW);
+								currentClaim->when(FL_WHEN_RELEASE);
+								currentClaim->setTableType(1);
+								currentClaim->col_header(1);
+								currentClaim->col_resize(1);
+								currentClaim->cols(4);
+								currentClaim->col_width_all((currentClaim->w()-40)/4);
+								currentClaim->row_header(1);
+								currentClaim->row_resize(1);
+
+								if(codesToClaim.size() > 0)
+										  currentClaim->rows(codesToClaim.size());	
+								else
+										  currentClaim->rows(1);
+								currentClaim->callback(table_cb, (void*)currentClaim);
+								currentClaim->when(FL_WHEN_RELEASE | FL_WHEN_CHANGED);
+					 }
+					 currentClaim->end();
+
+					 Fl_Button* removeStuff = new Fl_Button(15, 400 - 35, 75, 20, "Remove");
+					 removeStuff->callback(removeElementCallback);
+		  }
+
+		  toClaim->end();
+		  toClaim->show();
 }
 
 void submitClaimCallback(Fl_Widget* w, void* ptr)
 {
-		  Fl_Window* claimWindow = new Fl_Window(250, 250, "Submit a Claim");
+		  // So this stuff is crazy, you can add some codes using the defualt button (Soon to be changed)
+		  // Then it pops up with this nifty looking window that has a table full of the codes that you want to claim
+		  // To be nice I made it so that you can only claim up to 8 codes otherwise it pops up and will take you to a
+		  // screen that will show you what you are currently claiming and you can remove some so that you can make a claim.
+		  // Thats right, only 8 codes and then it nags you about how you have to many codes.
+		  // Next thing you know it will be telling you to come home earlier and spend more time with.
+		  // Clingy bitch.....
 
-		  ICDTable* claimTable = new ICDTable(0, 0, 150, 150, "Claim Table");
-		  claimTable->setTableType(1);
-		  claimTable->col_header(1);		// enable col headers
-		  claimTable->col_resize(1);		// enable col resizing
-		  claimTable->cols(4);
-		  claimTable->col_width_all((claimTable->w()-40)/4);   	// setting width of all cols
-		  claimTable->row_header(1);		// enable row headers
-		  claimTable->row_resize(1);		// enable row resizing
-		  
-		  if(codesToClaim.size() > 0)
-					 claimTable->rows(codesToClaim.size());	
+		  if(codesToClaim.size() <= 1)
+		  {
+					 Fl_Window* claimWindow = new Fl_Window(600, 415, "Submit a Claim");
+					 {
+								Fl_Tabs* claims = new Fl_Tabs(15, 15, claimWindow->w() - 30, 350, " ");
+								{
+										  Fl_Group* codes = new Fl_Group(15, 30, claims->w(), 350, "Claims");
+										  {
+
+													 ICDTable* claimTable = new ICDTable(30, 45, codes->w() - 30, 300, "");
+													 claimTable->setTableType(1);
+													 claimTable->col_header(1);		// enable col headers
+													 claimTable->col_resize(1);		// enable col resizing
+													 claimTable->cols(4);
+													 claimTable->col_width_all((claimTable->w()-40)/4);   	// setting width of all cols
+													 claimTable->row_header(1);		// enable row headers
+													 claimTable->row_resize(1);		// enable row resizing
+
+													 if(codesToClaim.size() > 0)
+																claimTable->rows(codesToClaim.size());	
+													 else
+																claimTable->rows(1);
+
+													 claimTable->end();
+										  }
+										  codes->end();
+
+										  Fl_Group* patientInfo = new Fl_Group(15, 30, codes->w() - 30, 300, "Patient Info");
+										  {
+										  }
+										  patientInfo->end();
+								}
+								claims->end();
+					 }
+
+					 Fl_Button* submitButton = new Fl_Button(15, 380, 100, 20, "Submit Claim");
+					 submitButton->callback(testCallback);
+
+					 claimWindow->resizable(claimWindow);
+					 claimWindow->end();
+					 claimWindow->show();
+		  }
 		  else
-					 claimTable->rows(1);
+		  {
+		  			 isPrompt = true;
+					 prompt = new Fl_Window(415, 125, "Too many codes");
 
-		  claimTable->end();
+					 Fl_Box* textBox = new Fl_Box(15, 15, prompt->w() - 30, 50);
+					 textBox->label("You have too many codes in your claim. Would you like to remove some?");
+					 textBox->align(FL_ALIGN_WRAP);
+					 Fl_Button* yes = new Fl_Button(235, 90, 75, 20, "Yes");
+					 yes->callback(toClaimCallback, ptr);
+					 Fl_Button* no = new Fl_Button(325, 90, 75, 20, "No");
+					 no->callback(windowKill, prompt);
 
-		  claimWindow->resizable(claimWindow);
-		  claimWindow->end();
-		  claimWindow->show();
+					 prompt->end();
+					 prompt->show();
+		  }
+}
+
+void dxCodeCreateCallback(Fl_Widget* w, void* ptr)
+{
+		  Fl_Window* dxCodeWindow = new Fl_Window(300, 300, "DX Code Creation");
+		  {
+					 Fl_Input* icdCode = new Fl_Input(45, 15, 250, 20, "ICD 10 Code");
+					 icdCode->readonly(1);
+					 Fl_Multiline_Input* dxDescription = new Fl_Multiline_Input(45, 50, 200, 60, "DX Description");
+					 dxDescription->wrap(15);
+					 dxDescription->maximum_size(250);
+
+		  }
+		  dxCodeWindow->end();
+		  dxCodeWindow->show();
 }
 
 int main(int argc, char** argv)
@@ -587,6 +719,7 @@ int main(int argc, char** argv)
 		  atexit(destroyEnet);
 		  Fl_Window* window = new Fl_Window(600, 500, "ICD Conversion Application");
 		  codeInputBox = new Fl_Input(15, 30, 435, 20);
+		  codeInputBox->maximum_size(45);
 
 		  Fl_Button* submitButton = new Fl_Button(window->w()-90, 30, 75, 20, "Submit");
 		  submitButton->callback(&submitButtonClick, codeInputBox);
@@ -594,12 +727,15 @@ int main(int argc, char** argv)
 		  codeInputBox->callback(&submitButtonClick, codeInputBox);
 		  codeInputBox->when(FL_WHEN_ENTER_KEY | FL_WHEN_NOT_CHANGED);
 
-		  Fl_Button *defaultButton = new Fl_Button(15, 435, 150, 20, "Make default code");
+		  Fl_Button *defaultButton = new Fl_Button(15, 435, 150, 20, "Add Code To Claim");
 		  defaultButton->callback(addToClaimCallback);
+
+		  Fl_Button* showClaim = new Fl_Button(180, 435, 150, 20, "Show Current Claim");
+		  showClaim->callback(toClaimCallback);
 
 		  // Who knew that creating a menu could be so boring......
 		  menu = new Fl_Menu_Bar(0, 0, window->w(), 20, " ");
-		  menu->add("File/Claim", " ", submitClaimCallback);
+		  menu->add("File/Claim", " ", dxCodeCreateCallback);
 		  menu->add("File/Exit", "esc", exitCallback);
 		  menu->add("Recent/", 0, testCallback);
 		  menu->add("Help/Get Help", "h", helpCallback);
@@ -630,7 +766,7 @@ int main(int argc, char** argv)
 		  window->resizable(window);
 		  window->end();
 		  window->show(argc, argv);
-
+		  
 		  Fl::lock();
 
 		  fl_create_thread(enetThread, enetMain, NULL);
