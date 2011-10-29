@@ -16,6 +16,11 @@ To build the project, the following applications are required:
   * libapr1-dev
   * libaprutil1-dev
 
+For those that are lazy :P
+{{{
+sudo apt-get install g++ make subversion postgresql libpqxx-dev libx11-dev libapr1-dev libaprutil1-dev
+}}}
+
 = Build Instructions =
 Steps to build:
   # Build the Boost libraries
