@@ -110,4 +110,9 @@ That line should be changed to say:
 local   all    all  trust
 }}}
 
+Once you have edited the file, you have to restart the service:
+{{{
+sudo service postgresql restart
+}}}
+
 This will allow you to easily log in without complaining about "Peer authentication" errors.
