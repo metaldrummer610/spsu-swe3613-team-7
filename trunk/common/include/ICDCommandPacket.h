@@ -15,8 +15,8 @@ class ICDCommand;
 class ICDCommandPacket : public ICDPacket
 {
 public:
-	ICDCommandPacket() : ICDPacket(ICD_PACKET_TYPE_COMMAND), command(NULL) {}
-	ICDCommandPacket(ICDCommand* cmd) : ICDPacket(ICD_PACKET_TYPE_COMMAND), command(cmd) {}
+	ICDCommandPacket() : ICDPacket(PacketType::Command), command(NULL) {}
+	ICDCommandPacket(ICDCommand* cmd) : ICDPacket(PacketType::Command), command(cmd) {}
 
 	ICDCommand* getCommand() { return command; }
 	void setCommand(ICDCommand* cmd) { command = cmd; }
@@ -27,7 +27,6 @@ protected:
 	template<class Archive>
 	void serialize(Archive& ar, const unsigned int version)
 	{
-		std::cout << "Calling ICDCommandPacket serialize" << std::endl;
 		ar & boost::serialization::base_object<ICDPacket>(*this);
 		ar & command;
 	}

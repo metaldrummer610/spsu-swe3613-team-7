@@ -292,6 +292,28 @@ std::vector<ICDCode*> handleQuery(char* cstr) {
 	return v;
 }
 
+/*ICDCode* getSingleCode(CodeType type, std::string code)
+{
+	connection* c = connectToDatabase();
+
+	std::stringstream ss;
+
+	if(type == CodeType::ICD9)
+		ss << "select * from icd_9_descriptions where icd_9_code = '" << code << "';";
+	else if(type == CodeType::ICD10)
+		ss << "select * from icd_10_descriptions where icd_10_code = '" << code << "';";
+	else if(type == CodeType::DX)
+		ss << "select * from dx_codes where dx_code = '" << code << "';";
+
+	result r = runQuery(c, ss.str());
+
+	ICDCode* code = new ICDCode(type, row[2].c_str(), row[3].c_str(), row[4].c_str());
+	
+	disconnect(c);
+
+	return code;
+}*/
+
 void handleConvert9To10Command(ICDCommandConvert9To10* packet, ENetPeer* peer)
 {
 	std::vector<ICDCode*> codes = handleQuery((char*)packet->getCode().c_str());
@@ -302,6 +324,37 @@ void handleConvert9To10Command(ICDCommandConvert9To10* packet, ENetPeer* peer)
 	sendPacket(resp, peer);
 }
 
+void handleGetICD9CodeCommand(ICDCommandGetICD9Code* packet, ENetPeer* peer)
+{
+/*	ICDCode* code = excuteQuery(packet->getCode());
+
+	ICDResponseGetICD9Code* responseGet = new ICDResponseGetICD9Code(code);
+	ICDResponsePacket* resp = new ICDResponsePacket(respGet);
+
+	sendPacket(resp, peer);*/
+}
+
+void handleGetICD10CodeCommand(ICDCommandGetICD10Code* packet, ENetPeer* peer)
+{
+}
+
+void handleGetDXCodeCommand(ICDCommandGetDXCode* packet, ENetPeer* peer)
+{
+}
+
+void handleCreateDXCodeCommand(ICDCommandCreateDXCode* packet, ENetPeer* peer)
+{
+	connection* c = connectToDatabase();
+
+	insertDxCode(c, packet->getDXCode(), packet->getICD10Code());
+
+	disconnect(c);
+}
+
+void handleGetDXCodesCommand(ICDCommandGetDXCodes* packet, ENetPeer* peer)
+{
+}
+
 void handlePacket(ENetPacket* p, ENetPeer* peer)
 {
 	LOG("about to get the packet");
@@ -310,19 +363,35 @@ void handlePacket(ENetPacket* p, ENetPeer* peer)
 
 	switch(packet->getType())
 	{
-		case ICD_PACKET_TYPE_COMMAND:
+		case PacketType::Command:
 			{
-				LOG("Its a command");
 				ICDCommandPacket* commandPacket = (ICDCommandPacket*)packet;
-				LOG("Casting...");
 				ICDCommand* command = commandPacket->getCommand();
-				LOG("Casted");
-				std::cout << "commandType: " << command->getCommandType() << std::endl;
-				if(command->getCommandType() == ICD_COMMAND_CONVERT_9_TO_10)
+				
+				if(command->getCommandType() == CommandType::Convert9To10)
 				{
-					LOG("Convert 9 to 10");
 					handleConvert9To10Command((ICDCommandConvert9To10*)command, peer);
-					LOG("Handled. Hyaaa! Hyaaa Falkor! Onward!!11?eleven");
+					LOG("Handled. Hyaaa! Hyaaa Falkor! Onward!!11?eleven"); // lol
+				}
+				else if(command->getCommandType() == CommandType::GetICD9Code)
+				{
+					handleGetICD9CodeCommand((ICDCommandGetICD9Code*)command, peer);
+				}
+				else if(command->getCommandType() == CommandType::GetICD10Code)
+				{
+					handleGetICD10CodeCommand((ICDCommandGetICD10Code*)command, peer);
+				}
+				else if(command->getCommandType() == CommandType::GetDXCode)
+				{
+					handleGetDXCodeCommand((ICDCommandGetDXCode*)command, peer);
+				}
+				else if(command->getCommandType() == CommandType::CreateDXCode)
+				{
+					handleCreateDXCodeCommand((ICDCommandCreateDXCode*)command, peer);
+				}
+				else if(command->getCommandType() == CommandType::GetDXCodes)
+				{
+					handleGetDXCodesCommand((ICDCommandGetDXCodes*)command, peer);
 				}
 			}
 			break;

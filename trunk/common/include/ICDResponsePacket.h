@@ -14,8 +14,8 @@ class ICDResponse;
 class ICDResponsePacket : public ICDPacket
 {
 public:
-	ICDResponsePacket() : ICDPacket(ICD_PACKET_TYPE_RESPONSE), response(NULL) {}
-	ICDResponsePacket(ICDResponse* resp) : ICDPacket(ICD_PACKET_TYPE_RESPONSE), response(resp) {}
+	ICDResponsePacket() : ICDPacket(PacketType::Response), response(NULL) {}
+	ICDResponsePacket(ICDResponse* resp) : ICDPacket(PacketType::Response), response(resp) {}
 
 	ICDResponse* getResponse() { return response; }
 	void setResponse(ICDResponse* i) { response = i; }

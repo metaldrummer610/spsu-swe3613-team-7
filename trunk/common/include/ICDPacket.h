@@ -5,30 +5,34 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/export.hpp>
 
+enum class PacketType
+{
+	NotSet = -1,
+	Command = 1,
+	Response
+};
+
 class ICDPacket
 {
 public:
-	ICDPacket() : type(0) {}
-	ICDPacket(int t) : type(t) {}
+	ICDPacket() : type(PacketType::NotSet) {}
+	ICDPacket(PacketType t) : type(t) {}
 
 	virtual ~ICDPacket()
 	{
 	}
 
-	int getType() { return type; }
-	void setType(int i) { type = i; }
+	PacketType getType() { return type; }
+	void setType(PacketType i) { type = i; }
 protected:
-	int type;
+	PacketType type;
 
 	friend class boost::serialization::access;
 	template<class Archive>
 	void serialize(Archive& ar, const unsigned int version)
 	{
-		std::cout << "Calling ICDPacket serialize" << std::endl;
 		ar & type;
 	}
 };
 
-//BOOST_SERIALIZATION_ASSUME_ABSTRACT(ICDPacket)
-//BOOST_CLASS_EXPORT(ICDPacket)
 #endif
