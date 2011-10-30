@@ -383,6 +383,22 @@ void handleConvert9To10Response(ICDResponseConvert9To10* packet)
 		  std::cout << "Atreyu!!! Falkor!!! Need I go on....?" << std::endl;
 }
 
+void handleGetICD9Code(ICDResponseGetICD9Code* response)
+{
+}
+
+void handleGetICD10Code(ICDResponseGetICD10Code* response)
+{
+}
+
+void handleGetDXCode(ICDResponseGetDXCode* response)
+{
+}
+
+void handleGetDXCodes(ICDResponseGetDXCodes* response)
+{
+}
+
 void handlePacket(ENetPacket* p)
 {
 		  std::cout << "ZOMG WE GOT A PACKET1!!1!!!" << std::endl;
@@ -390,18 +406,29 @@ void handlePacket(ENetPacket* p)
 
 		  switch(packet->getType())
 		  {
-					 case ICD_PACKET_TYPE_COMMAND:
-								{
-										  ICDCommandPacket* commandPacket = (ICDCommandPacket*)packet;
-										  break;
-								}
-					 case ICD_PACKET_TYPE_RESPONSE:
+					 case PacketType::Response:
 								{
 										  ICDResponsePacket* responsePacket = (ICDResponsePacket*)packet;
 										  ICDResponse* response = responsePacket->getResponse();
-										  if(response->getResponseType() == ICD_RESPONSE_CONVERT_9_TO_10)
+										  if(response->getResponseType() == ResponseType::Convert9To10)
 										  {
 													 handleConvert9To10Response((ICDResponseConvert9To10*)response);
+										  }
+										  else if(response->getResponseType() == ResponseType::GetICD9Code)
+										  {
+										  	handleGetICD9Code((ICDResponseGetICD9Code*)response);
+										  }
+										  else if(response->getResponseType() == ResponseType::GetICD10Code)
+										  {
+										  	handleGetICD10Code((ICDResponseGetICD10Code*)response);
+										  }
+										  else if(response->getResponseType() == ResponseType::GetDXCode)
+										  {
+										  	handleGetDXCode((ICDResponseGetDXCode*)response);
+										  }
+										  else if(response->getResponseType() == ResponseType::GetDXCodes)
+										  {
+										  	handleGetDXCodes((ICDResponseGetDXCodes*)response);
 										  }
 								}
 		  }

@@ -10,39 +10,47 @@
 
 class ICDCode;
 
-/*
-* structure of packets
-* (int)(int)(data) <- 1st int tells us the total size of the packet, meaning everything after the size field. 2nd int tells us what type of packet this is
-* 	if type == command
-*		(int)(args...) <- int is the command type (see below). args... are a variable list of arguments that are determined by the command type
-* 	else if type == response
-* 		(int)(data) <- int is the response type. data is determined by the response type
-*/
+enum class CommandType
+{
+	NotSet = -1,
+	Convert9To10 = 1,
+	GetICD9Code,
+	GetICD10Code,
+	GetDXCode,
+	CreateDXCode,
+	GetDXCodes
+};
+
+enum class ResponseType
+{
+	NotSet = -1,
+	Convert9To10 = 1,
+	GetICD9Code,
+	GetICD10Code,
+	GetDXCode,
+	GetDXCodes
+};
 
 /**
 * Define packet types
 */
-#define ICD_PACKET_TYPE_COMMAND 	1
-#define ICD_PACKET_TYPE_RESPONSE	2
-
 class ICDCommand
 {
 public:
-	ICDCommand() : commandType(-1) {}
-	ICDCommand(int type) : commandType(type) {}
+	ICDCommand() : commandType(CommandType::NotSet) {}
+	ICDCommand(CommandType type) : commandType(type) {}
 
 	virtual ~ICDCommand()
 	{
 	}
 
-	int getCommandType() { return commandType; }
+	CommandType getCommandType() { return commandType; }
 protected:
-	int commandType;
+	CommandType commandType;
 	friend class boost::serialization::access;
 	template<class Archive>
 	void serialize(Archive& ar, const unsigned int version)
 	{
-		std::cout << "Calling ICDCommand serialize" << std::endl;
 		ar & commandType;
 	}
 };
@@ -52,16 +60,16 @@ BOOST_SERIALIZATION_ASSUME_ABSTRACT(ICDCommand)
 class ICDResponse
 {
 public:
-	ICDResponse() : responseType(-1) {}
-	ICDResponse(int type) : responseType(type) {}
+	ICDResponse() : responseType(ResponseType::NotSet) {}
+	ICDResponse(ResponseType type) : responseType(type) {}
 
 	virtual ~ICDResponse()
 	{
 	}
 
-	int getResponseType() { return responseType; }
+	ResponseType getResponseType() { return responseType; }
 protected:
-	int responseType;
+	ResponseType responseType;
 	friend class boost::serialization::access;
 	template<class Archive>
 	void serialize(Archive& ar, const unsigned int version)
@@ -80,12 +88,11 @@ BOOST_SERIALIZATION_ASSUME_ABSTRACT(ICDResponse)
 * ICD_RESPONSE_CONVERT_9_TO_10 is the response to this message
 * @see ICD_RESPONSE_CONVERT_9_TO_10
 */
-#define ICD_COMMAND_CONVERT_9_TO_10 1
 class ICDCommandConvert9To10 : public ICDCommand
 {
 public:
-	ICDCommandConvert9To10() : ICDCommand(ICD_COMMAND_CONVERT_9_TO_10), code("") {}
-	ICDCommandConvert9To10(std::string str) : ICDCommand(ICD_COMMAND_CONVERT_9_TO_10), code(str) {}
+	ICDCommandConvert9To10() : ICDCommand(CommandType::Convert9To10), code("") {}
+	ICDCommandConvert9To10(std::string str) : ICDCommand(CommandType::Convert9To10), code(str) {}
 
 	std::string getCode() { return code; }
 	void setCode(std::string c) { code = c; }
@@ -96,7 +103,6 @@ private:
 	template<class Archive>
 	void serialize(Archive& ar, const unsigned int version)
 	{
-		std::cout << "Calling ICDCommandConvert9To10 serialize" << std::endl;
 		ar & boost::serialization::base_object<ICDCommand>(*this);
 		ar & code;
 	}
@@ -110,13 +116,11 @@ private:
 * See the CodeList file for functions to convert between code lists and byte buffers
 * @see CodeList
 */
-#define ICD_RESPONSE_CONVERT_9_TO_10 1
-
 class ICDResponseConvert9To10 : public ICDResponse
 {
 public:
-	ICDResponseConvert9To10() : ICDResponse(ICD_RESPONSE_CONVERT_9_TO_10) {}
-	ICDResponseConvert9To10(std::vector<ICDCode*> v) : ICDResponse(ICD_RESPONSE_CONVERT_9_TO_10), codes(v) {}
+	ICDResponseConvert9To10() : ICDResponse(ResponseType::Convert9To10) {}
+	ICDResponseConvert9To10(std::vector<ICDCode*> v) : ICDResponse(ResponseType::Convert9To10), codes(v) {}
 
 	std::vector<ICDCode*> getCodes() { return codes; }
 	void setCodes(std::vector<ICDCode*> v) { codes = v; }
@@ -132,9 +136,179 @@ private:
 	}
 };
 
-//BOOST_CLASS_EXPORT(ICDCommand)
-//BOOST_CLASS_EXPORT(ICDResponse)
-//BOOST_CLASS_EXPORT(ICDCommandConvert9To10)
-//BOOST_CLASS_EXPORT(ICDResponseConvert9To10)
+class ICDCommandGetICD9Code : public ICDCommand
+{
+public:
+	ICDCommandGetICD9Code() : ICDCommand(CommandType::GetICD9Code), code("") {}
+	ICDCommandGetICD9Code(std::string str) : ICDCommand(CommandType::GetICD9Code), code(str) {}
+
+	std::string getCode() { return code; }
+	void setCode(std::string c) { code = c; }
+private:
+	std::string code;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<ICDCommand>(*this);
+		ar & code;
+	}
+};
+
+class ICDResponseGetICD9Code : public ICDResponse
+{
+public:
+	ICDResponseGetICD9Code() : ICDResponse(ResponseType::GetICD9Code), code(NULL) {}
+	ICDResponseGetICD9Code(ICDCode* c) : ICDResponse(ResponseType::GetICD9Code), code(c) {}
+
+	ICDCode* getCode() { return code; }
+private:
+	ICDCode* code;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<ICDResponse>(*this);
+		ar & code;
+	}
+};
+
+class ICDCommandGetICD10Code : public ICDCommand
+{
+public:
+	ICDCommandGetICD10Code() : ICDCommand(CommandType::GetICD10Code), code("") {}
+	ICDCommandGetICD10Code(std::string str) : ICDCommand(CommandType::GetICD10Code), code(str) {}
+
+	std::string getCode() { return code; }
+	void setCode(std::string c) { code = c; }
+private:
+	std::string code;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<ICDCommand>(*this);
+		ar & code;
+	}
+};
+
+class ICDResponseGetICD10Code : public ICDResponse
+{
+public:
+	ICDResponseGetICD10Code() : ICDResponse(ResponseType::GetICD10Code), code(NULL) {}
+	ICDResponseGetICD10Code(ICDCode* c) : ICDResponse(ResponseType::GetICD10Code), code(c) {}
+
+	ICDCode* getCode() { return code; }
+private:
+	ICDCode* code;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<ICDResponse>(*this);
+		ar & code;
+	}
+};
+
+class ICDCommandGetDXCode : public ICDCommand
+{
+public:
+	ICDCommandGetDXCode() : ICDCommand(CommandType::GetDXCode), code("") {}
+	ICDCommandGetDXCode(std::string str) : ICDCommand(CommandType::GetDXCode), code(str) {}
+
+	std::string getCode() { return code; }
+	void setCode(std::string c) { code = c; }
+private:
+	std::string code;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<ICDCommand>(*this);
+		ar & code;
+	}
+};
+
+class ICDResponseGetDXCode : public ICDResponse
+{
+public:
+	ICDResponseGetDXCode() : ICDResponse(ResponseType::GetDXCode), code(NULL) {}
+	ICDResponseGetDXCode(ICDCode* c) : ICDResponse(ResponseType::GetDXCode), code(c) {}
+
+	ICDCode* getCode() { return code; }
+private:
+	ICDCode* code;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<ICDResponse>(*this);
+		ar & code;
+	}
+};
+
+class ICDCommandCreateDXCode : public ICDCommand
+{
+public:
+	ICDCommandCreateDXCode() : ICDCommand(CommandType::CreateDXCode), icd10Code(""), dxCode("") {}
+	ICDCommandCreateDXCode(std::string str, std::string str2) : ICDCommand(CommandType::CreateDXCode), icd10Code(str), dxCode(str2) {}
+
+	std::string getICD10Code() { return icd10Code; }
+	void setICD10Code(std::string c) { icd10Code = c; }
+	
+	std::string getDXCode() { return dxCode; }
+	void setDXCode(std::string c) { dxCode = c; }
+private:
+	std::string icd10Code;
+	std::string dxCode;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<ICDCommand>(*this);
+		ar & icd10Code;
+		ar & dxCode;
+	}
+};
+
+class ICDCommandGetDXCodes : public ICDCommand
+{
+public:
+	ICDCommandGetDXCodes() : ICDCommand(CommandType::GetDXCodes) {}
+private:
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<ICDCommand>(*this);
+	}
+};
+
+class ICDResponseGetDXCodes : public ICDResponse
+{
+public:
+	ICDResponseGetDXCodes() : ICDResponse(ResponseType::GetDXCodes) {}
+	ICDResponseGetDXCodes(std::vector<ICDCode*> v) : ICDResponse(ResponseType::GetDXCodes), codes(v) {}
+
+	std::vector<ICDCode*> getCodes() { return codes; }
+	void setCodes(std::vector<ICDCode*> v) { codes = v; }
+private:
+	std::vector<ICDCode*> codes;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<ICDResponse>(*this);
+		ar & codes;
+	}
+};
 
 #endif

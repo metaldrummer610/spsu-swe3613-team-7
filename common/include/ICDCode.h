@@ -20,10 +20,11 @@
 * An enumeration that describes what type of code this object is
 */
 enum class CodeType
-{
-	ICD9 = 1, /**< enum value for ICD9 */
-	ICD10 = 2, /**< enum value for ICD10 */
-	NOT_SET = 0 /**< enum value for a code whose value is not ICD9 or ICD10 */
+{	
+	NOT_SET = 0, 	/**< enum value for a code whose value is not ICD9 or ICD10 */
+	ICD9 = 1,		/**< enum value for ICD9 */
+	ICD10, 			/**< enum value for ICD10 */
+	DX 				/**< enum value for a DX code*/
 };
 
 /**
