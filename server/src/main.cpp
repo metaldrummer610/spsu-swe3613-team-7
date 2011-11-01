@@ -90,7 +90,6 @@ result runQuery(connection *c, std::string query) {
 */
 void insertDxCode(connection *c, std::string dx_code, std::string icd_10_code) {
 	std::string query = "INSERT INTO dx_codes VALUES (upper('" + icd_10_code + "'),'" + dx_code + "')";
-	//LOG("dxQuery="+query);
 	runQuery(c,query);
 }
 
@@ -99,13 +98,15 @@ void insertDxCode(connection *c, std::string dx_code, std::string icd_10_code) {
 * \param r The result to print
 */
 void printResults(result r) {
-	for(result::const_iterator row=r.begin();row!=r.end();++row) {
+	int i=0;
+	for(result::const_iterator row=r.begin();row!=r.end() && i<MAX_RESULTS;++row) {
 		std::cout << "[";
    	for(result::tuple::const_iterator field=row->begin();field!=row->end();++field) {
       	std::cout << field->c_str();
 			if(field!=row->end()-1)
 				std::cout << ",";		
 		}
+		++i;
 		std::cout << "]" << std::endl;
 	}
 	std::cout << "Results:" << r.size() << std::endl;
@@ -222,7 +223,11 @@ std::vector<ICDCode*> processResults(result& r, std::vector<ICDCode*>& v, CodeTy
 	std::cout << "Processing Results v.size()=" << v.size() << std::endl;		
 	int j=0;		
 	for(result::const_iterator row = r.begin(); row != r.end() && j<MAX_RESULTS; ++row, ++j) {
+		if(true) {
+			std::cout << "description=" << row[3] << std::endl;	
+		}
 		ICDCode* code = new ICDCode(type, row[2].c_str(), row[3].c_str(), row[4].c_str());
+		
 		v.push_back(code);
 	}
 	return v;

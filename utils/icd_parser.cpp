@@ -81,7 +81,7 @@ void fix_utf8_string(string& str)
 */
 string replace_bad_chars(string source) {
     source=find_and_replace(source,"'","''");
-    source=find_and_replace(source,"x","X");
+    //source=find_and_replace(source,"x","X");
     string line=source;
     string::iterator end_it = utf8::find_invalid(line.begin(), line.end());
     if (end_it != line.end()) {
@@ -137,7 +137,7 @@ void ICD_Parser::parse_10_cm_codes() {
         icd_10_sql << sql;
         ++i;
     }
-    icd_10_sql << ",('NoDX','No Crosswalk');";
+    icd_10_sql << ",('NODX','No Crosswalk');";
 //End compact fast way
 
 /*
@@ -164,9 +164,10 @@ void ICD_Parser::parse_gems() {
 
 //Begin compact fast way
         if(0==i)
-            sql = "INSERT INTO " + GEMS_DB + " (icd_9_code, icd_10_code, flags) VALUES " + "('" + a + "','" + b + "','" + c + "')";
+            sql = "INSERT INTO " + GEMS_DB + " (icd_9_code, icd_10_code, flags) VALUES " + "('" + a + "',upper('" + b + "'),'" + c + "')";
         else
-            sql = ",('" + a + "','" + b + "','" + c + "')";
+            sql = ",('" + a + "',upper('" + b + "'),'" + c + "')";
+        std::cout << "query=" << sql << std::endl;
         gems_sql << sql;
         ++i;
     }
