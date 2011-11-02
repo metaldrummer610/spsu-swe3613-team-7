@@ -43,7 +43,6 @@ ENetHost* client;
 ENetPeer* peer;
 ENetAddress address;
 ENetEvent event;
-int currentSRow;
 std::string Header[4];
 std::string inputFBox;
 
@@ -55,6 +54,7 @@ std::vector<std::string> newDxCode;
 class ICDTable : public Fl_Table_Row
 {
 		  int typeOfTable;
+		  int currentSRow;
 		  // This is to make sure that I can use the table in other windows  
 		  // without have to make up some new classes that have this class in
 		  // it. So for this nonsense we will use: 0 for the main window,
@@ -76,6 +76,18 @@ class ICDTable : public Fl_Table_Row
 		  void setTableType(int type)
 		  {
 					 typeOfTable = type;
+		  }
+		  int getTableType()
+		  {
+					 return typeOfTable;
+		  }
+		  int getSRow()
+		  {
+					 return currentSRow;
+		  }
+		  void setSRow(int s)
+		  {
+					 currentSRow = s;
 		  }
 };
 
@@ -159,21 +171,6 @@ void ICDTable::draw_cell(TableContext context, int R, int C, int X, int Y, int W
 		  }
 }
 
-void table_cb(Fl_Widget* o, void* cdata)
-{
-		  // I'm fairly certain at this point that this callback is by far the most useless callback
-		  // in this project, I've seen more productivity in a method that returns the sum of 1+1
-		  Fl_Table *table = (Fl_Table*)cdata;
-		 /* fprintf(stderr, "%s callback: row=%d col=%d, context=%d, event=%d clicks=%d\n",
-								(const char*)table->label(),
-								(int)table->callback_row(),
-								(int)table->callback_col(),
-								(int)table->callback_context(),
-								(int)Fl::event(),
-								(int)Fl::event_clicks());*/
-		  currentSRow = (int)(table->callback_row());
-}
-
 void testCallback(Fl_Widget* w, void* ptr)
 {
 		  // It's but a simple test callback
@@ -218,7 +215,30 @@ void fixRecent()
 		  }
 }
 
-ICDTable* ICBMTable; //Just creating the table here for the purpose of being able to access it outside of main
+ICDTable* ICBMTable; 
+ICDTable* currentClaim;
+ICDTable* claimTable;
+
+void table_cb(Fl_Widget* o, void* cdata)
+{
+		  // I'm fairly certain at this point that this callback is by far the most useless callback
+		  // in this project, I've seen more productivity in a method that returns the sum of 1+1
+		  ICDTable* table = (ICDTable*)cdata;
+		 /* fprintf(stderr, "%s callback: row=%d col=%d, context=%d, event=%d clicks=%d\n",
+								(const char*)table->label(),
+								(int)table->callback_row(),
+								(int)table->callback_col(),
+								(int)table->callback_context(),
+								(int)Fl::event(),
+								(int)Fl::event_clicks());*/
+		  int  tableType = table->getTableType();
+		  if(tableType == 0)
+					 ICBMTable->setSRow((int)(table->callback_row()));
+		  else if(tableType == 1)
+					 currentClaim->setSRow((int)(table->callback_row()));
+		  else if(tableType == 2)
+					 claimTable->setSRow((int)(table->callback_row()));
+}
 
 void submitButtonClick(Fl_Widget* widget, void* ptr)
 {
@@ -366,8 +386,6 @@ void handleConvert9To10Response(ICDResponseConvert9To10* packet)
 		  else if(codes.size() == 0)
 		  {
 					 Header[0] = "Searched";
-					 ICBMTable->rows(1);
-					 ICBMTable->redraw();
 		  };
 		  Fl::unlock();
 		  Fl::awake(packet);
@@ -573,14 +591,17 @@ void addToClaimCallback(Fl_Widget* w, void* ptr)
 		  // But without this you could be robin hood.......
 
 		  bool inClaim = false;
-		  for(int i = 0; i < codesToClaim.size(); i++)
+		  if(codesToClaim.size() > 0)
 		  {
-					 if(strcmp(codesToClaim.at(i).at(1).c_str(), data.at(currentSRow).at(1).c_str()) == 0)
-								inClaim = true;
+					 for(int i = 0; i < codesToClaim.size(); i++)
+					 {
+								if(strcmp(codesToClaim.at(i).at(1).c_str(), data.at(ICBMTable->getSRow()).at(1).c_str()) == 0)
+										  inClaim = true;
+					 }
 		  }
-		  if(!inClaim)
+		  if(!inClaim && data.size() > 0)
 		  {
-					 codesToClaim.push_back(data.at(currentSRow));
+					 codesToClaim.push_back(data.at(ICBMTable->getSRow()));
 		  }
 }
 
@@ -592,22 +613,36 @@ void addToClaimCallback(Fl_Widget* w, void* ptr)
 // so ya... thats the run down.
 
 Fl_Window* prompt;
-ICDTable* currentClaim;
 bool isPrompt = false;
-
-// This function just kills windows, it's an assassian of windows. Awesome huh?
 void windowKill(Fl_Widget* w, void* ptr)
 {
-		 prompt->hide();
-		 prompt->default_callback(prompt, ptr);
+		  Fl_Window* win = (Fl_Window*)ptr;
+
+		  if(strcmp(win->label(), "DX Code Creation") == 0)
+		  {
+					 std::cout << "F**k trees I climb boyous motherf**ker" << std::endl;
+					 Fl_Window* noData = new Fl_Window(200, 155, "No Data");
+					 Fl_Box* nothing = new Fl_Box(0, 0, noData->w(), 60, "No data to submit");
+					 nothing->align(FL_ALIGN_CENTER);
+					 Fl_Button* ok = new Fl_Button((noData->w()/2) - 30, 75, 60, 20, "OK");
+					 ok->callback(windowKill, (void*)noData);
+					 noData->end();
+					 noData->show();
+		  }
+		  else
+					 std::cout << "Believe me when I say, I f**ked a mermaid" << std::endl;
+		  win->hide();
+		  win->default_callback(win, ptr);
 }
 
 void removeElementCallback(Fl_Widget* w, void* ptr)
 {
-		  codesToClaim.erase(codesToClaim.begin() + currentSRow);
-		  if(codesToClaim.size() > 0)
-					 currentClaim->rows(currentClaim->rows() - 1);
-		  currentClaim->redraw();
+		 if(codesToClaim.size() > 0 && currentClaim->getSRow() >= 0)
+		 {
+					codesToClaim.erase(codesToClaim.begin() + currentClaim->getSRow());
+					currentClaim->rows(currentClaim->rows() - 1);
+					currentClaim->redraw();
+		 }
 }
 
 void toClaimCallback(Fl_Widget* w, void* ptr)
@@ -663,7 +698,7 @@ void submitClaimCallback(Fl_Widget* w, void* ptr)
 		  // Next thing you know it will be telling you to come home earlier and spend more time with.
 		  // Clingy bitch.....
 
-		  if(codesToClaim.size() <= 1)
+		  if(codesToClaim.size() <= 8)
 		  {
 					 Fl_Window* claimWindow = new Fl_Window(600, 415, "Submit a Claim");
 					 {
@@ -672,7 +707,7 @@ void submitClaimCallback(Fl_Widget* w, void* ptr)
 										  Fl_Group* codes = new Fl_Group(15, 30, claims->w(), 350, "Claims");
 										  {
 
-													 ICDTable* claimTable = new ICDTable(30, 45, codes->w() - 30, 300, "");
+													 claimTable = new ICDTable(30, 45, codes->w() - 30, 300, "");
 													 claimTable->setTableType(1);
 													 claimTable->col_header(1);		// enable col headers
 													 claimTable->col_resize(1);		// enable col resizing
@@ -690,8 +725,17 @@ void submitClaimCallback(Fl_Widget* w, void* ptr)
 										  }
 										  codes->end();
 
-										  Fl_Group* patientInfo = new Fl_Group(15, 30, codes->w() - 30, 300, "Patient Info");
+										  Fl_Group* patientInfo = new Fl_Group(30, 30, claims->w(), 350, "Patient Info");
 										  {
+													 Fl_Input* name = new Fl_Input(80, 45, patientInfo->w() - 80, 20, "Name");
+													 name->maximum_size(100);
+
+													 Fl_Input* number = new Fl_Input(80, 80, patientInfo->w() - 80, 20, "Number");
+													 number->maximum_size(100);
+
+													 Fl_Multiline_Input* notes = new Fl_Multiline_Input(80, 115, patientInfo->w() - 80, 100, "Notes");
+													 notes->maximum_size(500);
+													 notes->wrap(1);
 										  }
 										  patientInfo->end();
 								}
@@ -716,23 +760,50 @@ void submitClaimCallback(Fl_Widget* w, void* ptr)
 					 Fl_Button* yes = new Fl_Button(235, 90, 75, 20, "Yes");
 					 yes->callback(toClaimCallback, ptr);
 					 Fl_Button* no = new Fl_Button(325, 90, 75, 20, "No");
-					 no->callback(windowKill, prompt);
-
+					 no->callback(windowKill, (void*)prompt);
 					 prompt->end();
 					 prompt->show();
 		  }
 }
 
+Fl_Window* dxCodeWindow;
+
+void saveDxCodeCallback(Fl_Widget* w, void* ptr)
+{
+		  newDxCode.clear();
+		  Fl_Multiline_Input* dxDescription = (Fl_Multiline_Input*) ptr;
+		  newDxCode.push_back(data.at(ICBMTable->getSRow()).at(1));
+		  newDxCode.push_back(dxDescription->value());
+		  std::string str(newDxCode.at(0));
+		  std::string str2(newDxCode.at(1));
+		  ICDCommandCreateDXCode* command = new ICDCommandCreateDXCode(str, str2);
+		  ICDCommandPacket* packet = new ICDCommandPacket(command);
+		  sendPacket(packet, peer);
+		  delete packet;
+		  dxCodeWindow->hide();
+		  dxCodeWindow->default_callback(dxCodeWindow, ptr);
+}
+
 void dxCodeCreateCallback(Fl_Widget* w, void* ptr)
 {
-		  Fl_Window* dxCodeWindow = new Fl_Window(300, 300, "DX Code Creation");
+		  dxCodeWindow = new Fl_Window(340, 200, "DX Code Creation");
 		  {
-					 Fl_Input* icdCode = new Fl_Input(45, 15, 250, 20, "ICD 10 Code");
+					 Fl_Input* icdCode = new Fl_Input(100, 15, 225, 20, "ICD 10 Code");
 					 icdCode->readonly(1);
-					 Fl_Multiline_Input* dxDescription = new Fl_Multiline_Input(45, 50, 200, 60, "DX Description");
-					 dxDescription->wrap(15);
+					 if(data.size() > 0)
+								icdCode->value(data.at(ICBMTable->getSRow()).at(1).c_str());
+					 else
+								icdCode->value("No Data");
+
+					 Fl_Multiline_Input* dxDescription = new Fl_Multiline_Input(100, 50, 225, 60, "Description");
+					 dxDescription->wrap(1);
 					 dxDescription->maximum_size(250);
 
+					 Fl_Button* saveDxCode = new Fl_Button(100, 125, 75, 20, "Save");
+					 if(data.size() > 0)
+								saveDxCode->callback(saveDxCodeCallback, dxDescription);
+					 else
+								saveDxCode->callback(windowKill, dxCodeWindow);
 		  }
 		  dxCodeWindow->end();
 		  dxCodeWindow->show();
@@ -744,7 +815,8 @@ int main(int argc, char** argv)
 		  std::cout << "About to init enet" << std::endl;
 		  initEnet();
 		  atexit(destroyEnet);
-		  Fl_Window* window = new Fl_Window(600, 500, "ICD Conversion Application");
+
+		  Fl_Window* window = new Fl_Window(750, 435, "ICD Conversion Application");
 		  codeInputBox = new Fl_Input(15, 30, 435, 20);
 		  codeInputBox->maximum_size(45);
 
@@ -754,15 +826,22 @@ int main(int argc, char** argv)
 		  codeInputBox->callback(&submitButtonClick, codeInputBox);
 		  codeInputBox->when(FL_WHEN_ENTER_KEY | FL_WHEN_NOT_CHANGED);
 
-		  Fl_Button *defaultButton = new Fl_Button(15, 435, 150, 20, "Add Code To Claim");
-		  defaultButton->callback(addToClaimCallback);
+		  Fl_Button* addToButton = new Fl_Button(window->w() - 165, 75, 150, 20, "Add Code To Claim");
+		  addToButton->callback(addToClaimCallback, (void*)ICBMTable);
 
-		  Fl_Button* showClaim = new Fl_Button(180, 435, 150, 20, "Show Current Claim");
+		  Fl_Button* createDxCode = new Fl_Button(window->w() - 165, 110, 150, 20, "Create DX Code");
+		  createDxCode->callback(dxCodeCreateCallback);
+
+		  Fl_Button* showClaim = new Fl_Button(window->w() - 165, 145, 150, 20, "Show Current Claim");
 		  showClaim->callback(toClaimCallback);
+
+		  Fl_Button* submitClaim = new Fl_Button(window->w() - 165, 180, 150, 20, "Submit Claim");
+		  submitClaim->callback(submitClaimCallback);
 
 		  // Who knew that creating a menu could be so boring......
 		  menu = new Fl_Menu_Bar(0, 0, window->w(), 20, " ");
-		  menu->add("File/Claim", " ", dxCodeCreateCallback);
+		  menu->add("File/Submit Claim", "", submitClaimCallback);
+		  menu->add("File/Current Claim", "", toClaimCallback);
 		  menu->add("File/Exit", "esc", exitCallback);
 		  menu->add("Recent/", 0, testCallback);
 		  menu->add("Help/Get Help", "h", helpCallback);
@@ -775,7 +854,7 @@ int main(int argc, char** argv)
 		  Header[3] = "Flags";
 
 		  // Creating all the table stuff	
-		  ICBMTable = new ICDTable(15, 75, window->w() - 30, 350, "ICBM Table");
+		  ICBMTable = new ICDTable(15, 75, window->w() - submitClaim->w() - 45, 350, "Code Table");
 		  ICBMTable->selection_color(FL_YELLOW);
 		  ICBMTable->when(FL_WHEN_RELEASE);
 		  ICBMTable->col_header(1);		// enable col headers
