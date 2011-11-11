@@ -238,11 +238,11 @@ class ICDResponseGetDXCode : public ICDResponse
 {
 public:
 	ICDResponseGetDXCode() : ICDResponse(ResponseType::GetDXCode), code(NULL) {}
-	ICDResponseGetDXCode(ICDCode* c) : ICDResponse(ResponseType::GetDXCode), code(c) {}
+	ICDResponseGetDXCode(DXCode* c) : ICDResponse(ResponseType::GetDXCode), code(c) {}
 
-	ICDCode* getCode() { return code; }
+	DXCode* getCode() { return code; }
 private:
-	ICDCode* code;
+	DXCode* code;
 
 	friend class boost::serialization::access;
 	template<class Archive>
@@ -295,12 +295,12 @@ class ICDResponseGetDXCodes : public ICDResponse
 {
 public:
 	ICDResponseGetDXCodes() : ICDResponse(ResponseType::GetDXCodes) {}
-	ICDResponseGetDXCodes(std::vector<ICDCode*> v) : ICDResponse(ResponseType::GetDXCodes), codes(v) {}
+	ICDResponseGetDXCodes(std::vector<DXCode*> v) : ICDResponse(ResponseType::GetDXCodes), codes(v) {}
 
-	std::vector<ICDCode*> getCodes() { return codes; }
-	void setCodes(std::vector<ICDCode*> v) { codes = v; }
+	std::vector<DXCode*> getCodes() { return codes; }
+	void setCodes(std::vector<DXCode*> v) { codes = v; }
 private:
-	std::vector<ICDCode*> codes;
+	std::vector<DXCode*> codes;
 
 	friend class boost::serialization::access;
 	template<class Archive>
