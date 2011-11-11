@@ -67,6 +67,7 @@ using namespace pqxx;
 
 ///Limits the number of results per query (for blank queries, "the", etc)
 #define MAX_RESULTS 50
+#define MAX_DX_RESULTS 50
 
 ENetHost* server;
 ENetAddress address;
@@ -352,9 +353,49 @@ void handleGetICD10CodeCommand(ICDCommandGetICD10Code* packet, ENetPeer* peer)
 {
 }
 
+void testGetDXCodeCommand(std::string) {
+	/*
+	connection *c=connectToDatabase();
+	std::string query="select d.dx_code,ten.icd_10_description, ten.icd_10_code FROM dx_codes d JOIN icd_10_cm_descriptions ten ON (d.icd_10_code=ten.icd_10_code)";
+	std::cout << "query=" << query << std::endl;
+	result r=runQuery(c,query);
+	std::string code, description, dx_code;
+
+	for(result::const_iterator row2=r.begin();row2!=r.end();++row2) {
+		dx_code=row2[0].c_str();
+		description=row2[1].c_str();
+		code=row2[2].c_str();
+	}
+
+  	ICDCode* returnCode = new ICDCode(CodeType::ICD10,code,description,"00000");
+	
+	ICDResponseGetDXCode* response = new ICDResponseGetDXCode(returnCode);
+	ICDResponsePacket* resp = new ICDResponsePacket(response);
+	
+	//sendPacket(resp, peer);
+		
+	disconnect(c);
+		*/
+}
+
 void handleGetDXCodeCommand(ICDCommandGetDXCode* packet, ENetPeer* peer)
 {
+	connection *c=connectToDatabase();
+	std::string query="select d.dx_code,ten.icd_10_description, ten.icd_10_code FROM dx_codes d JOIN icd_10_cm_descriptions ten ON (d.icd_10_code=ten.icd_10_code)";
+	result r=runQuery(c,query);
+	std::string code, description, dx_code;
+	for(result::const_iterator row2=r.begin();row2!=r.end();++row2) {
+		dx_code=row2[0].c_str();
+		description=row2[1].c_str();
+		code=row2[2].c_str();
+	}
+  	ICDCode* returnCode = new ICDCode(CodeType::ICD10,code,description,"00000");
+	ICDResponseGetDXCode* response = new ICDResponseGetDXCode(returnCode);
+	ICDResponsePacket* resp = new ICDResponsePacket(response);
+	sendPacket(resp, peer);
+	disconnect(c);
 }
+
 
 void handleCreateDXCodeCommand(ICDCommandCreateDXCode* packet, ENetPeer* peer)
 {
@@ -365,8 +406,26 @@ void handleCreateDXCodeCommand(ICDCommandCreateDXCode* packet, ENetPeer* peer)
 	disconnect(c);
 }
 
+void testGetDXCodesCommand() {
+
+}
 void handleGetDXCodesCommand(ICDCommandGetDXCodes* packet, ENetPeer* peer)
 {
+	connection *c=connectToDatabase();
+	std::string query = "select d.dx_code,ten.icd_10_description, ten.icd_10_code FROM dx_codes d JOIN icd_10_cm_descriptions ten ON (d.icd_10_code=ten.icd_10_code)";
+	std::cout << "query=" << query << std::endl;
+	result r=runQuery(c,query);
+	int i=0;		
+	std::vector<ICDCode*> codes;	
+	for(result::const_iterator row = r.begin(); row != r.end() && i<MAX_DX_RESULTS; ++row, ++i) {
+		std::cout << "dx_code" << std::endl;
+		ICDCode* newCode = new ICDCode(CodeType::ICD10,row[2].c_str(),row[1].c_str(),"00000");
+		codes.push_back(newCode);	
+	}
+	ICDResponseGetDXCodes* response = new ICDResponseGetDXCodes(codes);	
+	ICDResponsePacket *resp = new ICDResponsePacket(response);
+	sendPacket(resp, peer);	
+	disconnect(c);		
 }
 
 void handlePacket(ENetPacket* p, ENetPeer* peer)
@@ -449,6 +508,7 @@ void loop()
 
 int main()
 {
+	testGetDXCodesCommand(); 
 	// Initialize ENet
 	if(enet_initialize() != 0)
 	{
