@@ -307,28 +307,6 @@ std::vector<ICDCode*> handleQuery(char* cstr) {
 	return v;
 }
 
-/*ICDCode* getSingleCode(CodeType type, std::string code)
-{
-	connection* c = connectToDatabase();
-
-	std::stringstream ss;
-
-	if(type == CodeType::ICD9)
-		ss << "select * from icd_9_descriptions where icd_9_code = '" << code << "';";
-	else if(type == CodeType::ICD10)
-		ss << "select * from icd_10_descriptions where icd_10_code = '" << code << "';";
-	else if(type == CodeType::DX)
-		ss << "select * from dx_codes where dx_code = '" << code << "';";
-
-	result r = runQuery(c, ss.str());
-
-	ICDCode* code = new ICDCode(type, row[2].c_str(), row[3].c_str(), row[4].c_str());
-	
-	disconnect(c);
-
-	return code;
-}*/
-
 void handleConvert9To10Command(ICDCommandConvert9To10* packet, ENetPeer* peer)
 {
 	std::vector<ICDCode*> codes = handleQuery((char*)packet->getCode().c_str());
@@ -353,47 +331,34 @@ void handleGetICD10CodeCommand(ICDCommandGetICD10Code* packet, ENetPeer* peer)
 {
 }
 
-void testGetDXCodeCommand(std::string) {
-	/*
-	connection *c=connectToDatabase();
-	std::string query="select d.dx_code,ten.icd_10_description, ten.icd_10_code FROM dx_codes d JOIN icd_10_cm_descriptions ten ON (d.icd_10_code=ten.icd_10_code)";
-	std::cout << "query=" << query << std::endl;
-	result r=runQuery(c,query);
-	std::string code, description, dx_code;
-
-	for(result::const_iterator row2=r.begin();row2!=r.end();++row2) {
-		dx_code=row2[0].c_str();
-		description=row2[1].c_str();
-		code=row2[2].c_str();
-	}
-
-  	ICDCode* returnCode = new ICDCode(CodeType::ICD10,code,description,"00000");
-	
-	ICDResponseGetDXCode* response = new ICDResponseGetDXCode(returnCode);
-	ICDResponsePacket* resp = new ICDResponsePacket(response);
-	
-	//sendPacket(resp, peer);
-		
-	disconnect(c);
-		*/
-}
-
 void handleGetDXCodeCommand(ICDCommandGetDXCode* packet, ENetPeer* peer)
 {
 	connection *c=connectToDatabase();
+	
 	std::string query="select d.dx_code,ten.icd_10_description, ten.icd_10_code FROM dx_codes d JOIN icd_10_cm_descriptions ten ON (d.icd_10_code=ten.icd_10_code)";
 	result r=runQuery(c,query);
+	
 	std::string code, description, dx_code;
 	for(result::const_iterator row2=r.begin();row2!=r.end();++row2) {
 		dx_code=row2[0].c_str();
 		description=row2[1].c_str();
 		code=row2[2].c_str();
 	}
+
   	ICDCode* returnCode = new ICDCode(CodeType::ICD10,code,description,"00000");
-	ICDResponseGetDXCode* response = new ICDResponseGetDXCode(returnCode);
+	DXCode* dxCode = new DXCode(dx_code, returnCode);
+	
+	ICDResponseGetDXCode* response = new ICDResponseGetDXCode(dxCode);
 	ICDResponsePacket* resp = new ICDResponsePacket(response);
+	
 	sendPacket(resp, peer);
+	
 	disconnect(c);
+
+	delete dxCode;
+	delete returnCode;
+	delete response;
+	delete resp;
 }
 
 
@@ -406,26 +371,28 @@ void handleCreateDXCodeCommand(ICDCommandCreateDXCode* packet, ENetPeer* peer)
 	disconnect(c);
 }
 
-void testGetDXCodesCommand() {
-
-}
 void handleGetDXCodesCommand(ICDCommandGetDXCodes* packet, ENetPeer* peer)
 {
 	connection *c=connectToDatabase();
 	std::string query = "select d.dx_code,ten.icd_10_description, ten.icd_10_code FROM dx_codes d JOIN icd_10_cm_descriptions ten ON (d.icd_10_code=ten.icd_10_code)";
-	std::cout << "query=" << query << std::endl;
+//	std::cout << "query=" << query << std::endl;
 	result r=runQuery(c,query);
 	int i=0;		
-	std::vector<ICDCode*> codes;	
+	
+	std::vector<DXCode*> codes;	
 	for(result::const_iterator row = r.begin(); row != r.end() && i<MAX_DX_RESULTS; ++row, ++i) {
-		std::cout << "dx_code" << std::endl;
 		ICDCode* newCode = new ICDCode(CodeType::ICD10,row[2].c_str(),row[1].c_str(),"00000");
-		codes.push_back(newCode);	
+		DXCode* dxCode = new DXCode(row[0].c_str(), newCode);
+		
+		codes.push_back(dxCode);
 	}
-	ICDResponseGetDXCodes* response = new ICDResponseGetDXCodes(codes);	
+	
+	ICDResponseGetDXCodes* response = new ICDResponseGetDXCodes(codes);
 	ICDResponsePacket *resp = new ICDResponsePacket(response);
-	sendPacket(resp, peer);	
-	disconnect(c);		
+
+	sendPacket(resp, peer);
+	
+	disconnect(c);
 }
 
 void handlePacket(ENetPacket* p, ENetPeer* peer)
@@ -508,7 +475,6 @@ void loop()
 
 int main()
 {
-	testGetDXCodesCommand(); 
 	// Initialize ENet
 	if(enet_initialize() != 0)
 	{

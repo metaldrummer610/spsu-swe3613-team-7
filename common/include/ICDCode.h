@@ -66,4 +66,28 @@ protected:
 
 std::ostream& operator<<(std::ostream& out, ICDCode* code);
 
+class DXCode
+{
+public:
+	DXCode() : name(""), code(NULL) {}
+	DXCode(std::string n, ICDCode* c) : name(n), code(c) {}
+
+	std::string getName() { return name; }
+	ICDCode* getCode() { return code; }
+
+	void setName(std::string n) { name = n; }
+	void setCode(ICDCode* c) { code = c; }
+private:
+	std::string name;
+	ICDCode* code;
+	
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & name;
+		ar & code;
+	}
+};
+
 #endif
