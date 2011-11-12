@@ -142,8 +142,9 @@ connection* connectToDatabase() {
 			std::cout << "Connected to swe3613@localhost." << std::endl;
 		return c;
 	}
-   catch (const std::exception &e) {
-   	std::cerr << e.what() << std::endl;
+   	catch (const std::exception &e) {
+   	std::cout << "Database Connection Error!!" << std::endl;
+	std::cerr << e.what() << std::endl;
 		exit(EXIT_FAILURE);
    }
 }
@@ -330,6 +331,28 @@ void handleGetICD9CodeCommand(ICDCommandGetICD9Code* packet, ENetPeer* peer)
 void handleGetICD10CodeCommand(ICDCommandGetICD10Code* packet, ENetPeer* peer)
 {
 }
+
+/*
+
+************* I'm the delete DX Code stuff.  Waiting for the commands to be put in. *********
+
+void testDeleteDXCodeCommand(std::string dx) 
+{
+	connection *c=connectToDatabase();
+	std::string query="delete from dx_codes where dx_code = '"+dx+"'";
+	runQuery(query);
+	disconnect(c);	
+}
+
+void handleDeleteDXCodeCommand(ICDCommandDeleteDXCode* packet, ENetPeer* peer)
+{
+	connection *c=connectToDatabase();
+	std::string query="delete from dx_codes where dx_code = '"+packet->getDXCode()+"'";
+	runQuery(query);
+	disconnect(c);	
+}
+	*/
+	
 
 void handleGetDXCodeCommand(ICDCommandGetDXCode* packet, ENetPeer* peer)
 {
