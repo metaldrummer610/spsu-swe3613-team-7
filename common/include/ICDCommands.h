@@ -18,7 +18,8 @@ enum class CommandType
 	GetICD10Code,
 	GetDXCode,
 	CreateDXCode,
-	GetDXCodes
+	GetDXCodes,
+  DeleteDXCode
 };
 
 enum class ResponseType
@@ -308,6 +309,24 @@ private:
 	{
 		ar & boost::serialization::base_object<ICDResponse>(*this);
 		ar & codes;
+	}
+};
+
+class ICDCommandDeleteDXCode : public ICDCommand
+{
+public:
+	ICDCommandDeleteDXCode() : ICDCommand(CommandType::DeleteDXCode) : dxCode("") {}
+  ICDCommandDeleteDXCode(std:;string code) : ICDCommand(CommandType::DeleteDXCode) : dxCode(code) {}
+   
+private:
+  std::string dxCode;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<ICDCommand>(*this);
+    ar & dxCode;
 	}
 };
 
