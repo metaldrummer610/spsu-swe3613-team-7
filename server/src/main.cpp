@@ -344,15 +344,15 @@ void testDeleteDXCodeCommand(std::string dx)
 	runQuery(query);
 	disconnect(c);	
 }
-
+*/
 void handleDeleteDXCodeCommand(ICDCommandDeleteDXCode* packet, ENetPeer* peer)
 {
 	connection *c=connectToDatabase();
 	std::string query="delete from dx_codes where dx_code = '"+packet->getDXCode()+"'";
-	runQuery(query);
+	runQuery(c,query);
 	disconnect(c);	
 }
-	*/
+	
 	
 
 void handleGetDXCodeCommand(ICDCommandGetDXCode* packet, ENetPeer* peer)
@@ -456,6 +456,10 @@ void handlePacket(ENetPacket* p, ENetPeer* peer)
 				else if(command->getCommandType() == CommandType::GetDXCodes)
 				{
 					handleGetDXCodesCommand((ICDCommandGetDXCodes*)command, peer);
+				}
+				else if(command->getCommandType() == CommandType::DeleteDXCode)
+				{
+					handleDeleteDXCodeCommand((ICDCommandDeleteDXCode*)command, peer);
 				}
 			}
 			break;
