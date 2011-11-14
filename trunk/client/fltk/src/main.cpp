@@ -42,6 +42,7 @@ BOOST_CLASS_EXPORT(ICDResponseGetDXCode)
 BOOST_CLASS_EXPORT(ICDCommandCreateDXCode)
 BOOST_CLASS_EXPORT(ICDCommandGetDXCodes)
 BOOST_CLASS_EXPORT(ICDResponseGetDXCodes)
+BOOST_CLASS_EXPORT(ICDCommandDeleteDXCode)
 
 Fl_Select_Browser* codeList;
 Fl_Thread enetThread;
