@@ -61,7 +61,7 @@ std::string inputFBox;
 
 std::vector<std::vector<std::string> > data;
 std::vector<std::vector<std::string> > codesToClaim;
-std::vector<DXCode*> dxCodesList;
+std::vector<std::vector<std::string> > dxCodesList;
 std::vector<std::string> recent;
 
 
@@ -162,6 +162,15 @@ void ICDTable::draw_cell(TableContext context, int R, int C, int X, int Y, int W
 										  }
 										  else if(typeOfTable == 2)
 										  {
+													 if(codesToClaim.size() > 0)
+																sprintf(s, "%s", codesToClaim.at(R).at(C).c_str());
+										  }
+										  else if(typeOfTable == 3)
+										  {
+													 if(dxCodesList.size() > 0)
+													 {
+																sprintf(s, "%s", dxCodesList.at(R).at(C).c_str());
+													 }
 										  }
 										  fl_push_clip(X, Y, W, H);
 										  {
@@ -458,7 +467,44 @@ void handleGetDXCode(ICDResponseGetDXCode* response)
 }
 
 void handleGetDXCodes(ICDResponseGetDXCodes* response)
-{
+{ 
+		  std::vector<DXCode*> codes = response->getCodes();
+
+		  Fl::lock();
+		  for(auto it = codes.cbegin(); it != codes.cend(); it++)
+		  {
+					 
+
+					 std::vector<std::string> columns;
+					 columns.push_back((*it)->getCode()->getCode());
+					 columns.push_back((*it)->getName());
+
+					 dxCodesList.push_back(columns);
+					 columns.clear();
+					
+		  }
+		  if(codes.size() > 0)
+		  {
+					 dxCodes->rows(codes.size());
+					 dxCodes->redraw();
+		  }
+		  else if(codes.size() == 0)
+		  {
+					 dxCodes->rows(0);
+					 dxCodes->redraw();
+		  }
+		  Fl::unlock();
+		  Fl::awake(response);
+
+		  for(auto it = codes.begin(); it != codes.end(); it++)
+		  {
+					 delete (*it);
+					 (*it) = NULL;
+		  }
+
+		  codes.clear();
+
+		  std::cout << "Atreyu!!! Falkor!!! Need I go on....?" << std::endl;
 }
 
 void handlePacket(ENetPacket* p)
@@ -843,7 +889,7 @@ void dxCodeCreateCallback(Fl_Widget* w, void* ptr)
 
 					 Fl_Multiline_Input* dxDescription = new Fl_Multiline_Input(100, 50, 225, 60, "Description");
 					 dxDescription->wrap(1);
-					 dxDescription->maximum_size(250);
+					 dxDescription->maximum_size(10);
 
 					 Fl_Button* saveDxCode = new Fl_Button(100, 125, 75, 20, "Save");
 					 if(data.size() > 0 && ICBMTable->row_selected(ICBMTable->getSRow()) == 1)
@@ -865,11 +911,17 @@ void getMyDxCodes()
 
 void removeDxCode(Fl_Widget* w, void* ptr)
 {
-	// Lawl. Yo dawg, I heard you liked codes, so I took some codes and put some codes inside it.
-		  ICDCommandDeleteDXCode* command = new ICDCommandDeleteDXCode(dxCodesList.at(dxCodes->getSRow())->getCode()->getCode());
-		  ICDCommandPacket* packet = new ICDCommandPacket(command);
-		  sendPacket(packet, peer);
-		  delete packet;
+		  // Lawl. Yo dawg, I heard you liked codes, so I took some codes and put some codes inside it.
+		  if(dxCodesList.size() > 0  && dxCodes->getSRow() >= 0 && dxCodes->row_selected(dxCodes->getSRow()) == 1)
+		  {
+					 ICDCommandDeleteDXCode* command = new ICDCommandDeleteDXCode(dxCodesList.at(dxCodes->getSRow()).at(1));
+					 ICDCommandPacket* packet = new ICDCommandPacket(command);
+					 sendPacket(packet, peer);
+					 delete packet;
+					 dxCodesList.erase(dxCodesList.begin() + dxCodes->getSRow());
+					 dxCodes->rows(dxCodesList.size());
+					 dxCodes->redraw();
+		  }
 }
 
 void dxCodeCallback(Fl_Widget* w, void* ptr)
@@ -878,8 +930,14 @@ void dxCodeCallback(Fl_Widget* w, void* ptr)
 		  Fl_Window* dxCodeWindow = new Fl_Window(500, 300, "DX Codes Window");
 		  dxCodeWindow->begin();
 		  dxCodes = new ICDTable(15, 15, dxCodeWindow->w() - 30, dxCodeWindow->h() - 65);
-		  dxCodes->setTableType(2);
+		  dxCodes->setTableType(3);
 		  dxCodes->callback(table_cb, (void*)dxCodes);
+		  dxCodes->col_header(1);
+		  dxCodes->cols(2);
+		  dxCodes->col_width_all((dxCodes->w()-42)/2); 
+		  dxCodes->row_header(1);
+		  dxCodes->rows(0);
+		  dxCodes->end();
 		  Fl_Button* removeCode = new Fl_Button(15, dxCodeWindow->h() - 35, 75, 20, "Remove");
 		  removeCode->callback(removeDxCode);
 		  dxCodeWindow->end();
@@ -903,19 +961,20 @@ int main(int argc, char** argv)
 		  codeInputBox->callback(&submitButtonClick, codeInputBox);
 		  codeInputBox->when(FL_WHEN_ENTER_KEY | FL_WHEN_NOT_CHANGED);
 
-		  Fl_Button* addToButton = new Fl_Button(window->w() - 165, 110, 150, 20, "Add Code To Claim");
+		  Fl_Button* addToButton = new Fl_Button(window->w() - 165, 165, 150, 20, "Add Code To Claim");
 		  addToButton->callback(addToClaimCallback, (void*)ICBMTable);
 
 		  Fl_Button* createDxCode = new Fl_Button(window->w() - 165, 75, 150, 20, "Create DX Code");
 		  createDxCode->callback(dxCodeCreateCallback);
 
-		  Fl_Button* showDxCodes = new Fl_Button(window->w() - 165, 110, 150, 20, "Show/Remove Dx Codes");
+		  Fl_Button* showDxCodes = new Fl_Button(window->w() - 165, 110, 150, 40, "Show/Remove Dx Codes");
+		  showDxCodes->align(FL_ALIGN_WRAP);
 		  showDxCodes->callback(dxCodeCallback);
 
-		  Fl_Button* showClaim = new Fl_Button(window->w() - 165, 145, 150, 20, "Show Current Claim");
+		  Fl_Button* showClaim = new Fl_Button(window->w() - 165, 200, 150, 20, "Show Current Claim");
 		  showClaim->callback(toClaimCallback);
 
-		  Fl_Button* submitClaim = new Fl_Button(window->w() - 165, 180, 150, 20, "Submit Claim");
+		  Fl_Button* submitClaim = new Fl_Button(window->w() - 165, 235, 150, 20, "Submit Claim");
 		  submitClaim->callback(submitClaimCallback);
 
 		  // Who knew that creating a menu could be so boring......
