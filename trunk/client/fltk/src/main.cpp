@@ -15,6 +15,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Multiline_Input.H>
+#include <FL/Fl_Progress.H>
 #include <stdio.h>
 #include <string.h>
 
@@ -33,21 +34,14 @@ BOOST_CLASS_EXPORT(ICDResponsePacket)
 BOOST_CLASS_EXPORT(ICDCommandPacket)
 BOOST_CLASS_EXPORT(ICDCommandConvert9To10)
 BOOST_CLASS_EXPORT(ICDResponseConvert9To10)
-BOOST_CLASS_EXPORT(ICDCommandGetICD9Code)
-BOOST_CLASS_EXPORT(ICDResponseGetICD9Code)
-BOOST_CLASS_EXPORT(ICDCommandGetICD10Code)
-BOOST_CLASS_EXPORT(ICDResponseGetICD10Code)
-BOOST_CLASS_EXPORT(ICDCommandGetDXCode)
-BOOST_CLASS_EXPORT(ICDResponseGetDXCode)
-BOOST_CLASS_EXPORT(ICDCommandCreateDXCode)
-BOOST_CLASS_EXPORT(ICDCommandGetDXCodes)
-BOOST_CLASS_EXPORT(ICDResponseGetDXCodes)
 BOOST_CLASS_EXPORT(ICDCommandDeleteDXCode)
 
 Fl_Select_Browser* codeList;
 Fl_Thread enetThread;
 Fl_Menu_Bar* menu;
 Fl_Input* codeInputBox;
+Fl_Button* submitButton;
+Fl_Window* window;
 bool enetThreadRunning = false;
 ENetHost* client;
 ENetPeer* peer;
@@ -58,8 +52,9 @@ std::string inputFBox;
 
 std::vector<std::vector<std::string> > data;
 std::vector<std::vector<std::string> > codesToClaim;
+std::vector<DXCode*> dxCodesList;
 std::vector<std::string> recent;
-std::vector<std::string> newDxCode;
+
 
 class ICDTable : public Fl_Table_Row
 {
@@ -173,6 +168,7 @@ void ICDTable::draw_cell(TableContext context, int R, int C, int X, int Y, int W
 													 fl_color(FL_LIGHT2); 
 													 fl_rect(X, Y, W, H);
 										  }
+										  
 										  fl_pop_clip();
 										  return;
 								}
@@ -180,6 +176,26 @@ void ICDTable::draw_cell(TableContext context, int R, int C, int X, int Y, int W
 								return;
 		  }
 }
+
+/*class ProgressBar : public Fl_Progress
+{
+		  Fl_Progress* pBar;
+		  private:
+		  public:
+					 ProgressBar(int x, int y, int w, int h) : Fl_Progess(x, y, w, h)
+		  {
+					 Fl_Window* w = window;
+					 w->begin();
+					 pBar = new Fl_Progress(x, y, w, h);
+					 pBar->minimum(0);
+					 pBar->maximum(1);
+					 w->end();
+		  }
+					 ~ProgressBar() { }
+					 void update(int i, int s)
+					 {
+					 }
+};*/
 
 void testCallback(Fl_Widget* w, void* ptr)
 {
@@ -228,6 +244,7 @@ void fixRecent()
 ICDTable* ICBMTable; 
 ICDTable* currentClaim;
 ICDTable* claimTable;
+ICDTable* dxCodes;
 
 void table_cb(Fl_Widget* o, void* cdata)
 {
@@ -248,6 +265,8 @@ void table_cb(Fl_Widget* o, void* cdata)
 					 currentClaim->setSRow((int)(table->callback_row()));
 		  else if(tableType == 2)
 					 claimTable->setSRow((int)(table->callback_row()));
+		  else if(tableType == 3)
+					 dxCodes->setSRow((int)(table->callback_row()));
 }
 
 void submitButtonClick(Fl_Widget* widget, void* ptr)
@@ -368,12 +387,15 @@ void destroyEnet()
 void handleConvert9To10Response(ICDResponseConvert9To10* packet)
 {
 		  std::vector<ICDCode*> codes = packet->getCodes();
+		  submitButton->deactivate();
 
 		  Fl::lock();
 		  for(auto it = codes.cbegin(); it != codes.cend(); it++)
 		  {
 					 //std::cout << "Got a code!: " << (*it) << std::endl;
 					 // Hey, guess what TODO, we fixed it you can haz your leave now
+					 
+
 					 std::vector<std::string> columns;
 					 columns.push_back(inputFBox);
 					 columns.push_back((*it)->getCode());
@@ -387,6 +409,7 @@ void handleConvert9To10Response(ICDResponseConvert9To10* packet)
 					 }
 					 data.push_back(columns);
 					 columns.clear();
+					
 		  }
 		  if(codes.size() > 0)
 		  {
@@ -395,8 +418,9 @@ void handleConvert9To10Response(ICDResponseConvert9To10* packet)
 		  }
 		  else if(codes.size() == 0)
 		  {
-					 Header[0] = "Searched";
-		  };
+					 ICBMTable->rows(0);
+					 ICBMTable->redraw();
+		  }
 		  Fl::unlock();
 		  Fl::awake(packet);
 
@@ -405,6 +429,7 @@ void handleConvert9To10Response(ICDResponseConvert9To10* packet)
 					 delete (*it);
 					 (*it) = NULL;
 		  }
+		  submitButton->activate();
 
 		  codes.clear();
 
@@ -459,6 +484,12 @@ void handlePacket(ENetPacket* p)
 										  	handleGetDXCodes((ICDResponseGetDXCodes*)response);
 										  }
 								}
+								case PacketType::Command:
+								{
+								}
+								case PacketType::NotSet:
+								{
+								}
 		  }
 
 		  delete packet;
@@ -512,6 +543,7 @@ void helpTreeCallback(Fl_Widget* w, void* data)
 		  // TODO: Create another box to put all this whacky information into
 		  Fl_Tree* tree = (Fl_Tree*)w;
 		  Fl_Tree_Item* item = (Fl_Tree_Item*)tree->callback_item();
+		  helpOut->wrap(1);
 
 		  if(! item) return;
 		  switch(tree->callback_reason())
@@ -522,21 +554,22 @@ void helpTreeCallback(Fl_Widget* w, void* data)
 
 								if(strncmp(path, "1x", 1) == 0)
 								{
-										  if(strncmp(item->label(), "1x", 1) == 0)
+										  if(strncmp(item->label(), "IIx", 2) == 0)
 										  {
-													 std::cout << item->label() << std::endl;
-													 helpOut->value(item->label());
+													 helpOut->value("The table is divided into 4 parts: a searched, ICD10 Code, Description, and Flag column.");
 										  }
-										  else if(strncmp(item->label(), "2x", 1) == 0)
+							
+										  else if(strncmp(item->label(), "Ix", 1) == 0)
 										  {
-													 helpOut->value(item->label());
+													 helpOut->value("To submit a code enter a value into the text box and hit the enter key or press the submit button to the left.");
 										  }
+										
 								}
 								else if(strncmp(path, "2x", 1) == 0)
 								{
-										  if(strncmp(item->label(), "1x", 1) == 0)
+										  if(strncmp(item->label(), "Ix", 1) == 0)
 										  {
-													 helpOut->value(item->label());
+													 helpOut->value("At the top of the main screen on the menu is a recent menu, that when accessed you can select previously used codes.");
 										  }
 								}
 								break;
@@ -567,9 +600,9 @@ void helpCallback(Fl_Widget* w, void* ptr)
 		  helpTree->showroot(0);
 		  helpTree->callback(helpTreeCallback);
 
-		  helpTree->add("1. ICD Conversion/1. Submitting a code");
-		  helpTree->add("1. ICD Conversion/2. How to read the table");
-		  helpTree->add("2. Recent/1. How to use the recent menu");
+		  helpTree->add("1. ICD Conversion/I. Submitting a code");
+		  helpTree->add("1. ICD Conversion/II. How to read the table");
+		  helpTree->add("2. Recent/I. How to use the recent menu");
 
 		  helpTree->close("1. ICD Conversion");
 		  helpTree->close("2. Recent");
@@ -603,7 +636,7 @@ void addToClaimCallback(Fl_Widget* w, void* ptr)
 		  bool inClaim = false;
 		  if(codesToClaim.size() > 0)
 		  {
-					 for(int i = 0; i < codesToClaim.size(); i++)
+					 for(unsigned int i = 0; i < codesToClaim.size(); i++)
 					 {
 								if(strcmp(codesToClaim.at(i).at(1).c_str(), data.at(ICBMTable->getSRow()).at(1).c_str()) == 0)
 										  inClaim = true;
@@ -630,7 +663,6 @@ void windowKill(Fl_Widget* w, void* ptr)
 
 		  if(strcmp(win->label(), "DX Code Creation") == 0)
 		  {
-					 std::cout << "F**k trees I climb boyous motherf**ker" << std::endl;
 					 Fl_Window* noData = new Fl_Window(200, 155, "No Data");
 					 Fl_Box* nothing = new Fl_Box(0, 0, noData->w(), 60, "No data to submit");
 					 nothing->align(FL_ALIGN_CENTER);
@@ -639,15 +671,13 @@ void windowKill(Fl_Widget* w, void* ptr)
 					 noData->end();
 					 noData->show();
 		  }
-		  else
-					 std::cout << "Believe me when I say, I f**ked a mermaid" << std::endl;
 		  win->hide();
 		  win->default_callback(win, ptr);
 }
 
 void removeElementCallback(Fl_Widget* w, void* ptr)
 {
-		 if(codesToClaim.size() > 0 && currentClaim->getSRow() >= 0)
+		 if (codesToClaim.size() > 0 && currentClaim->getSRow() >= 0 && currentClaim->row_selected(currentClaim->getSRow()) == 1)
 		 {
 					codesToClaim.erase(codesToClaim.begin() + currentClaim->getSRow());
 					currentClaim->rows(currentClaim->rows() - 1);
@@ -684,7 +714,7 @@ void toClaimCallback(Fl_Widget* w, void* ptr)
 								if(codesToClaim.size() > 0)
 										  currentClaim->rows(codesToClaim.size());	
 								else
-										  currentClaim->rows(1);
+										  currentClaim->rows(0);
 								currentClaim->callback(table_cb, (void*)currentClaim);
 								currentClaim->when(FL_WHEN_RELEASE | FL_WHEN_CHANGED);
 					 }
@@ -729,7 +759,7 @@ void submitClaimCallback(Fl_Widget* w, void* ptr)
 													 if(codesToClaim.size() > 0)
 																claimTable->rows(codesToClaim.size());	
 													 else
-																claimTable->rows(1);
+																claimTable->rows(0);
 
 													 claimTable->end();
 										  }
@@ -780,14 +810,11 @@ Fl_Window* dxCodeWindow;
 
 void saveDxCodeCallback(Fl_Widget* w, void* ptr)
 {
-		  newDxCode.clear();
 		  Fl_Multiline_Input* dxDescription = (Fl_Multiline_Input*) ptr;
-		  newDxCode.push_back(data.at(ICBMTable->getSRow()).at(1));
-		  newDxCode.push_back(dxDescription->value());
-		  std::string str(newDxCode.at(0));
-		  std::string str2(newDxCode.at(1));
-		  ICDCommandCreateDXCode* command = new ICDCommandCreateDXCode(str, str2);
-		  ICDCommandPacket* packet = new ICDCommandPacket(command);
+		  std::string str(data.at(ICBMTable->getSRow()).at(1));
+		  std::string str2(dxDescription->value());
+		  ICDCommandCreateDXCode* createCommand = new ICDCommandCreateDXCode(str, str2);
+		  ICDCommandPacket* packet = new ICDCommandPacket(createCommand);
 		  sendPacket(packet, peer);
 		  delete packet;
 		  dxCodeWindow->hide();
@@ -800,7 +827,7 @@ void dxCodeCreateCallback(Fl_Widget* w, void* ptr)
 		  {
 					 Fl_Input* icdCode = new Fl_Input(100, 15, 225, 20, "ICD 10 Code");
 					 icdCode->readonly(1);
-					 if(data.size() > 0)
+					 if(data.size() > 0 && ICBMTable->row_selected(ICBMTable->getSRow()) == 1)
 								icdCode->value(data.at(ICBMTable->getSRow()).at(1).c_str());
 					 else
 								icdCode->value("No Data");
@@ -810,11 +837,41 @@ void dxCodeCreateCallback(Fl_Widget* w, void* ptr)
 					 dxDescription->maximum_size(250);
 
 					 Fl_Button* saveDxCode = new Fl_Button(100, 125, 75, 20, "Save");
-					 if(data.size() > 0)
+					 if(data.size() > 0 && ICBMTable->row_selected(ICBMTable->getSRow()) == 1)
 								saveDxCode->callback(saveDxCodeCallback, dxDescription);
 					 else
 								saveDxCode->callback(windowKill, dxCodeWindow);
 		  }
+		  dxCodeWindow->end();
+		  dxCodeWindow->show();
+}
+
+void getMyDxCodes()
+{
+		  ICDCommandGetDXCodes* command = new ICDCommandGetDXCodes();
+		  ICDCommandPacket* packet = new ICDCommandPacket(command);
+		  sendPacket(packet, peer);
+		  delete packet;
+}
+
+void removeDxCode(Fl_Widget* w, void* ptr)
+{
+		  ICDCommandDeleteDXCode* command = new ICDCommandDeleteDXCode(dxCodesList.at(dxCodes->getSRow).getCode);
+		  ICDCommandPacket* packet = new ICDCommandPacket(command);
+		  sendPacket(packet, peer);
+		  delete packet;
+}
+
+void dxCodeCallback(Fl_Widget* w, void* ptr)
+{
+		  getMyDxCodes();
+		  Fl_Window* dxCodeWindow = new Fl_Window(500, 300, "DX Codes Window");
+		  dxCodeWindow->begin();
+		  dxCodes = new ICDTable(15, 15, dxCodeWindow->w() - 30, dxCodeWindow->h() - 65);
+		  dxCodes->setTableType(2);
+		  dxCodes->callback(table_cb, (void*)dxCodes);
+		  Fl_Button* removeCode = new Fl_Button(15, dxCodeWindow->h() - 35, 75, 20, "Remove");
+		  removeCode->callback(removeDxCode);
 		  dxCodeWindow->end();
 		  dxCodeWindow->show();
 }
@@ -826,21 +883,24 @@ int main(int argc, char** argv)
 		  initEnet();
 		  atexit(destroyEnet);
 
-		  Fl_Window* window = new Fl_Window(750, 435, "ICD Conversion Application");
+		  window = new Fl_Window(750, 435, "ICD Conversion Application");
 		  codeInputBox = new Fl_Input(15, 30, 435, 20);
 		  codeInputBox->maximum_size(45);
 
-		  Fl_Button* submitButton = new Fl_Button(window->w()-90, 30, 75, 20, "Submit");
+		  submitButton = new Fl_Button(window->w()-90, 30, 75, 20, "Submit");
 		  submitButton->callback(&submitButtonClick, codeInputBox);
 
 		  codeInputBox->callback(&submitButtonClick, codeInputBox);
 		  codeInputBox->when(FL_WHEN_ENTER_KEY | FL_WHEN_NOT_CHANGED);
 
-		  Fl_Button* addToButton = new Fl_Button(window->w() - 165, 75, 150, 20, "Add Code To Claim");
+		  Fl_Button* addToButton = new Fl_Button(window->w() - 165, 110, 150, 20, "Add Code To Claim");
 		  addToButton->callback(addToClaimCallback, (void*)ICBMTable);
 
-		  Fl_Button* createDxCode = new Fl_Button(window->w() - 165, 110, 150, 20, "Create DX Code");
+		  Fl_Button* createDxCode = new Fl_Button(window->w() - 165, 75, 150, 20, "Create DX Code");
 		  createDxCode->callback(dxCodeCreateCallback);
+
+		  Fl_Button* showDxCodes = new Fl_Button(window->w() - 165, 110, 150, 20, "Show/Remove Dx Codes");
+		  showDxCodes->callback(dxCodeCallback);
 
 		  Fl_Button* showClaim = new Fl_Button(window->w() - 165, 145, 150, 20, "Show Current Claim");
 		  showClaim->callback(toClaimCallback);
@@ -873,7 +933,7 @@ int main(int argc, char** argv)
 		  ICBMTable->col_width_all((ICBMTable->w()-40)/4);   	// setting width of all cols
 		  ICBMTable->row_header(1);		// enable row headers
 		  ICBMTable->row_resize(1); 		// enable row resizing
-		  ICBMTable->rows(10);	
+		  ICBMTable->rows(0);	
 		  ICBMTable->callback(table_cb, (void*)ICBMTable);
 		  ICBMTable->when(FL_WHEN_CHANGED|FL_WHEN_RELEASE);
 		  ICBMTable->end();
@@ -886,9 +946,6 @@ int main(int argc, char** argv)
 		  Fl::lock();
 
 		  fl_create_thread(enetThread, enetMain, NULL);
-		  return Fl::run();
-}
 
-/* How nice of you to continue reading past all the other nonsense and read this comment. Honestly though, this comment has absolutely nothing to do
- * with the program, I just felt like anyone who made it past the rest of my bullshit with all the additional callbacks and what-have-you. You deserve * some kind of thanks, so here you go.... "Thanks." Best thank you in history right?
- */
+		  return (Fl::run());
+}
