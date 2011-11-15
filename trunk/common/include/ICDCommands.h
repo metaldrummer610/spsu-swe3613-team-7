@@ -315,9 +315,11 @@ private:
 class ICDCommandDeleteDXCode : public ICDCommand
 {
 public:
-	ICDCommandDeleteDXCode() : ICDCommand(CommandType::DeleteDXCode) : dxCode("") {}
-  ICDCommandDeleteDXCode(std:;string code) : ICDCommand(CommandType::DeleteDXCode) : dxCode(code) {}
+	ICDCommandDeleteDXCode() : ICDCommand(CommandType::DeleteDXCode), dxCode("") {}
+  	ICDCommandDeleteDXCode(std::string code) : ICDCommand(CommandType::DeleteDXCode), dxCode(code) {}
    
+	std::string getDXCode() { return dxCode; }
+	void setDXCode(std::string str) { dxCode = str; }
 private:
   std::string dxCode;
 
@@ -326,7 +328,7 @@ private:
 	void serialize(Archive& ar, const unsigned int version)
 	{
 		ar & boost::serialization::base_object<ICDCommand>(*this);
-    ar & dxCode;
+		ar & dxCode;
 	}
 };
 
