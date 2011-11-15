@@ -34,6 +34,15 @@ BOOST_CLASS_EXPORT(ICDResponsePacket)
 BOOST_CLASS_EXPORT(ICDCommandPacket)
 BOOST_CLASS_EXPORT(ICDCommandConvert9To10)
 BOOST_CLASS_EXPORT(ICDResponseConvert9To10)
+BOOST_CLASS_EXPORT(ICDCommandGetICD9Code)
+BOOST_CLASS_EXPORT(ICDResponseGetICD9Code)
+BOOST_CLASS_EXPORT(ICDCommandGetICD10Code)
+BOOST_CLASS_EXPORT(ICDResponseGetICD10Code)
+BOOST_CLASS_EXPORT(ICDCommandGetDXCode)
+BOOST_CLASS_EXPORT(ICDResponseGetDXCode)
+BOOST_CLASS_EXPORT(ICDCommandCreateDXCode)
+BOOST_CLASS_EXPORT(ICDCommandGetDXCodes)
+BOOST_CLASS_EXPORT(ICDResponseGetDXCodes)
 BOOST_CLASS_EXPORT(ICDCommandDeleteDXCode)
 
 Fl_Select_Browser* codeList;
@@ -856,7 +865,8 @@ void getMyDxCodes()
 
 void removeDxCode(Fl_Widget* w, void* ptr)
 {
-		  ICDCommandDeleteDXCode* command = new ICDCommandDeleteDXCode(dxCodesList.at(dxCodes->getSRow).getCode);
+	// Lawl. Yo dawg, I heard you liked codes, so I took some codes and put some codes inside it.
+		  ICDCommandDeleteDXCode* command = new ICDCommandDeleteDXCode(dxCodesList.at(dxCodes->getSRow())->getCode()->getCode());
 		  ICDCommandPacket* packet = new ICDCommandPacket(command);
 		  sendPacket(packet, peer);
 		  delete packet;
