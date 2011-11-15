@@ -321,7 +321,12 @@ void handleConvert9To10Command(ICDCommandConvert9To10* packet, ENetPeer* peer)
 
 void handleGetICD9CodeCommand(ICDCommandGetICD9Code* packet, ENetPeer* peer)
 {
-/*	ICDCode* code = excuteQuery(packet->getCode());
+/*	ICDCode* code = excuteQuery(packet->getCode());	std::vector<ICDCode*> codes = handleQuery((char*)packet->getCode().c_str());
+
+	ICDResponseConvert9To10* respConvert = new ICDResponseConvert9To10(codes);
+	ICDResponsePacket* resp = new ICDResponsePacket(respConvert);
+	
+	sendPacket(resp, peer);
 
 	ICDResponseGetICD9Code* responseGet = new ICDResponseGetICD9Code(code);
 	ICDResponsePacket* resp = new ICDResponsePacket(respGet);
