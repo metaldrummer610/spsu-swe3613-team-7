@@ -395,7 +395,18 @@ void handleCreateDXCodeCommand(ICDCommandCreateDXCode* packet, ENetPeer* peer)
 {
 	connection* c = connectToDatabase();
 
-	insertDxCode(c, packet->getDXCode(), packet->getICD10Code());
+	std::string query="select * FROM dx_codes where dx_code = '" + packet->getDXCode() + "'";
+	result r=runQuery(c,query);
+	
+	// There's a better way to do this, I'm sure, I just don't want to look it up right now...
+	bool hasResults = false;
+	for(result::const_iterator row2=r.begin();row2!=r.end();++row2) {
+		hasResults = true;
+		break;
+	}
+
+	if(!hasResults)
+		insertDxCode(c, packet->getDXCode(), packet->getICD10Code());
 
 	disconnect(c);
 }
